@@ -1,5 +1,5 @@
 // simples service worker para cache básico offline (adapte arquivos conforme necessário)
-const CACHE_NAME = 'dual-infodose-v1';
+const CACHE_NAME = 'dual-infodose-v2';
 const ASSETS = [
   './', // se servir como index.html
   './index.html',
