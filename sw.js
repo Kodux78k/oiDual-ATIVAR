@@ -30,7 +30,7 @@ self.addEventListener('fetch', ev => {
           caches.open(CACHE_NAME).then(cache => cache.put(ev.request, respClone));
         }
         return resp;
-      }).catch(()=>caches.match('/index.html')); // fallback
+      }).catch(()=>caches.match('./index.html')); // fallback
     })
   );
 });
