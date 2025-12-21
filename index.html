@@ -667,19 +667,14 @@
 
 <script>
 /* -----------------------------
-   Dual Infodose — KOBLLUX OS
-   (Versão Corrigida - Debug)
+   Dual Infodose — Unified Expanded (CORRIGIDO)
+   KOBLLUX OS v2.5
    ----------------------------- */
 
 (() => {
-  // ---------- CONFIGURAÇÃO & CONSTANTES ----------
-  const STORAGE_KEYS = {
-    docs: 'dual_docs',
-    videos: 'dual_videos',
-    user: 'dual_user',
-    assistant: 'dual_assistant'
-  };
+  console.log("Sistema KOBLLUX Inicializando...");
 
+  // ---------- ARCHETYPES ----------
   const ARCHETYPES = [
     { id:'atlas', name:'Atlas', symbol:'(6_9)', mantra:'Eu ergo a base e inicio o caminho.', shadow:'Sombra: Sobrecarga (Mártir) ou Fuga.', voice:'Reed', rate:1.0, pitch:0.93, colorMain:'#38BDF8', colorSecondary:'#0EA5E9' },
     { id:'nova', name:'Nova', symbol:'(:_:)', mantra:'Eu expando com leveza e continuidade.', shadow:'Sombra: Dispersão e Falta de Foco.', voice:'Luciana', rate:1.06, pitch:1.1, colorMain:'#F97316', colorSecondary:'#FDBA74' },
@@ -695,15 +690,18 @@
     { id:'kobllux', name:'KOBLLUX', symbol:'[K]', mantra:'Núcleo do sistema. Oracular.', shadow:'Sombra: Frio Absoluto.', voice:'Google', rate:0.90, pitch:0.8, colorMain:'#22D3EE', colorSecondary:'#06B6D4' }
   ];
 
-  // Carregamento Seguro do Estado (Evita crash por JSON inválido)
-  let safeDocs = [], safeVideos = [];
-  try { safeDocs = JSON.parse(localStorage.getItem(STORAGE_KEYS.docs) || '[]'); } catch(e){ console.error('Docs Reset', e); }
-  try { safeVideos = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '[]'); } catch(e){ console.error('Videos Reset', e); }
+  // ---------- STATE ----------
+  const STORAGE_KEYS = {
+    docs: 'dual_docs',
+    videos: 'dual_videos',
+    user: 'dual_user',
+    assistant: 'dual_assistant'
+  };
 
   let state = {
     activeArch: ARCHETYPES[0],
-    docs: safeDocs,
-    videos: safeVideos,
+    docs: JSON.parse(localStorage.getItem(STORAGE_KEYS.docs) || '[]'),
+    videos: JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '[]'),
     userName: localStorage.getItem(STORAGE_KEYS.user) || '',
     assistantName: localStorage.getItem(STORAGE_KEYS.assistant) || '',
     isSpeaking: false
@@ -725,14 +723,12 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
-  // Função centralizada para salvar (Resolve o bug de duplicação)
+  // Função unificada para salvar estado
   function saveState(){
     localStorage.setItem(STORAGE_KEYS.docs, JSON.stringify(state.docs));
     localStorage.setItem(STORAGE_KEYS.videos, JSON.stringify(state.videos));
     localStorage.setItem(STORAGE_KEYS.user, state.userName);
     localStorage.setItem(STORAGE_KEYS.assistant, state.assistantName);
-    
-    // Atualiza UI em tempo real
     renderLibrary();
     renderVideos();
     renderLiveCards();
@@ -743,16 +739,6 @@
     return d.toLocaleString('pt-BR');
   }
 
-  function escapeHtml(unsafe) {
-    if(!unsafe && unsafe !== 0) return '';
-    return String(unsafe)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#039;');
-  }
-
   // ---------- UI / THEME ----------
   function applyTheme(arch){
     const root = document.documentElement;
@@ -760,19 +746,12 @@
     root.style.setProperty('--accent2', arch.colorSecondary);
     root.style.setProperty('--accent-glow', hexToRgba(arch.colorMain, 0.4));
     
-    const uiName = document.getElementById('ui-name');
-    if(uiName) uiName.innerHTML = `${arch.symbol} ${arch.name}`;
-    
-    const uiMantra = document.getElementById('ui-mantra');
-    if(uiMantra) uiMantra.innerText = arch.mantra;
-    
-    const uiShadow = document.getElementById('ui-shadow');
-    if(uiShadow) uiShadow.innerText = arch.shadow;
-
+    document.getElementById('ui-name') && (document.getElementById('ui-name').innerHTML = `${arch.symbol} ${arch.name}`);
+    document.getElementById('ui-mantra') && (document.getElementById('ui-mantra').innerText = arch.mantra);
+    document.getElementById('ui-shadow') && (document.getElementById('ui-shadow').innerText = arch.shadow);
     document.querySelectorAll('.picker-chip').forEach(c=>c.classList.remove('active'));
     const chip = document.querySelector(`.picker-chip[data-id="${arch.id}"]`);
     if(chip) chip.classList.add('active');
-    
     state.activeArch = arch;
   }
 
@@ -799,14 +778,12 @@
 
   // ---------- TTS ----------
   function ensureVoices(callback){
-    if(!synth) return;
     let voices = synth.getVoices();
     if(voices.length>0) return callback(voices);
     synth.onvoiceschanged = () => callback(synth.getVoices());
   }
 
   window.toggleSpeech = function(){
-    if(!synth) return;
     if(state.isSpeaking){
       synth.cancel();
       state.isSpeaking = false;
@@ -833,8 +810,6 @@
     const spectrum = document.getElementById('spectrum');
     const status = document.getElementById('status-pill');
     const playText = document.getElementById('play-status');
-    if(!spectrum || !status || !playText) return;
-
     if(playing){
       spectrum.classList.add('active');
       status.innerText='TRANSMITINDO';
@@ -893,7 +868,6 @@
 
   function renderLibrary(){
     const container = document.getElementById('lib-content');
-    if(!container) return;
     container.innerHTML = '';
     if(!state.docs || state.docs.length === 0) {
       container.innerHTML = '<div style="text-align:center;color:var(--text-muted);margin-top:30px;font-style:italic">Nenhum dado capturado.</div>';
@@ -919,11 +893,11 @@
   window.deleteDoc = function(index){
     state.docs.splice(index,1);
     saveState();
+    renderLibrary();
   }
 
   function updateLibraryUI(){
-    const label = document.getElementById('count-label');
-    if(label) label.innerText = state.docs.length > 0 ? `${state.docs.length}` : '0';
+    document.getElementById('count-label').innerText = state.docs.length > 0 ? `${state.docs.length}` : '0';
   }
 
   // ---------- VIDEO HANDLER ----------
@@ -949,11 +923,11 @@
     state.videos.unshift(v);
     saveState();
     closeAddVideo();
+    renderVideos();
   }
 
   function renderVideos(){
     const list = document.getElementById('video-list');
-    if(!list) return;
     list.innerHTML = '';
     if(!state.videos || state.videos.length===0) { list.innerHTML = '<div class="small" style="color:var(--text-muted)">Nenhum vídeo.</div>'; return; }
     state.videos.forEach((v, i)=>{
@@ -973,11 +947,12 @@
   window.deleteVideo = function(index){
     state.videos.splice(index,1);
     saveState();
+    renderVideos();
   }
 
   function findVideoById(id){ return state.videos.find(v=>String(v.id)===String(id)) }
 
-  // ---------- DOC GENERATION ----------
+  // ---------- InfoDoc generation & download ----------
   function generateInfoDoc(video){
     const arch = state.activeArch;
     const contentMd = `# InfoDoc — ${video.title || 'Vídeo'}
@@ -996,16 +971,22 @@
 
 Gerado pelo Dual Infodose — KOBLLUX
 `;
-    return contentMd;
+    const contentJson = {
+      meta:{ user: state.userName||'Viajante', date: new Date().toISOString() },
+      video,
+      arch
+    };
+    return { md: contentMd, json: JSON.stringify(contentJson, null, 2) };
   }
 
   window.generateInfoDocFromVideo = function(id){
     const v = findVideoById(id);
     if(!v) return alert('Vídeo não encontrado');
-    const content = generateInfoDoc(v);
-    downloadBlob(content, `${sanitizeFilename(v.title || 'infodoc')}.md`, 'text/markdown;charset=utf-8');
+    const files = generateInfoDoc(v);
+    downloadBlob(files.md, `${sanitizeFilename(v.title || 'infodoc')}.md`, 'text/markdown;charset=utf-8');
     state.docs.unshift({ id: Date.now(), title: `${state.activeArch.name} — ${v.title}`, desc: state.activeArch.mantra, time: formatDate(), source:v.url });
     saveState();
+    renderLibrary();
   }
 
   function downloadBlob(content, filename, mime='text/plain'){
@@ -1071,10 +1052,8 @@ Gerado pelo Dual Infodose — KOBLLUX
     document.getElementById('user-welcome').innerText = `AGENTE: ${state.userName}`;
     shortBeep("Protocolo Aceito");
     const btn = document.querySelector('.primary');
-    if(btn){
-        btn.innerText = 'Ativado!';
-        setTimeout(()=>btn.innerText='Ativar', 1500);
-    }
+    btn.innerText = 'Ativado!';
+    setTimeout(()=>btn.innerText='Ativar', 1500);
   }
 
   window.clearProfile = function(){
@@ -1089,10 +1068,9 @@ Gerado pelo Dual Infodose — KOBLLUX
     updateLibraryUI();
   }
 
-  // ---------- LIVE CARDS ----------
+  // ---------- LIVE CARDS (smaller view) ----------
   function renderLiveCards(){
     const container = document.getElementById('live-cards');
-    if(!container) return;
     container.innerHTML = '';
     if(!state.docs || state.docs.length===0){
       container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:12px; font-style:italic">Vazio.</div>';
@@ -1114,12 +1092,22 @@ Gerado pelo Dual Infodose — KOBLLUX
     if(cards[0]) cards[0].style.borderColor = state.activeArch.colorMain;
   }
 
-  // ---------- PWA ----------
+  // ---------- UTIL ----------
+  function escapeHtml(unsafe) {
+    if(!unsafe && unsafe !== 0) return '';
+    return String(unsafe)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+
+  // ---------- PWA: beforeinstallprompt ----------
   window.addEventListener('beforeinstallprompt', (e)=>{
     e.preventDefault();
     deferredPrompt = e;
-    const btn = document.getElementById('prompt-install');
-    if(btn) btn.style.display = 'inline-block';
+    document.getElementById('prompt-install').style.display = 'inline-block';
   });
 
   window.promptInstall = async function(){
@@ -1132,73 +1120,76 @@ Gerado pelo Dual Infodose — KOBLLUX
     }
   }
 
+  // ---------- Service Worker registration ----------
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(err=>{});
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      console.log('SW registrado', reg);
+    }).catch(err=>console.warn('SW erro (local dev ok):', err));
   }
 
-  // ---------- SPLASH / BOOT (A PARTE QUE VOCÊ ESTAVA DEBUGANDO) ----------
+  // ---------- SPLASH / BOOT ----------
+  // Esta função é chamada pelo botão "Iniciar Link"
   window.initSystem = function(){
-    console.log("Iniciando Sistema..."); // Log para Debug
     const nameInput = document.getElementById('splash-name');
     const name = nameInput ? nameInput.value.trim() : '';
     
     state.userName = name || state.userName || 'Viajante';
-    saveState(); // Salva o nome
+    localStorage.setItem(STORAGE_KEYS.user, state.userName);
     
     // Atualiza UI
-    const pName = document.getElementById('profile-name');
-    if(pName) pName.value = state.userName;
-    
-    const uWelcome = document.getElementById('user-welcome');
-    if(uWelcome) uWelcome.innerText = `Agente: ${state.userName}`;
+    document.getElementById('profile-name').value = state.userName;
+    document.getElementById('user-welcome').innerText = `Agente: ${state.userName}`;
     
     // Animação de saída
     const splash = document.getElementById('splash-screen');
-    if(splash){
-        splash.style.opacity = '0';
-        setTimeout(()=>{
-            splash.classList.add('hidden');
-            document.querySelector('.shell').classList.add('visible');
-        }, 800);
-    }
+    splash.style.opacity = '0';
+    
+    // Remove do DOM visualmente após a transição
+    setTimeout(()=>{
+        splash.classList.add('hidden');
+        const shell = document.getElementById('main-shell');
+        if(shell) shell.classList.add('visible');
+    }, 800);
 
-    // TTS Inicial (Se suportado)
-    if(synth){
-        const welcome = `Sistema KOBLLUX online. Bem-vindo, ${state.userName}.`;
-        const u = new SpeechSynthesisUtterance(welcome);
-        u.lang = 'pt-BR';
-        ensureVoices((voices)=>{ if(voices[0]) u.voice = voices[0]; synth.speak(u); });
-    }
+    // Audio de boas-vindas
+    const welcome = `Sistema KOBLLUX online. Bem-vindo, ${state.userName}.`;
+    const u = new SpeechSynthesisUtterance(welcome);
+    u.lang = 'pt-BR';
+    ensureVoices((voices)=>{ if(voices[0]) u.voice = voices[0]; synth.speak(u); });
   };
 
   // Clock
-  setInterval(()=>{ 
-      const clock = document.getElementById('clock');
-      if(clock) clock.innerText = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  }, 1000);
+  setInterval(()=>{ document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) }, 1000);
 
-  // ---------- INITIALIZE UI (GARANTIDO NO DOMREADY) ----------
+  // ---------- INITIALIZE UI ----------
   function initUI(){
     buildPicker();
     applyTheme(state.activeArch);
     renderLiveCards();
     renderVideos();
     updateLibraryUI();
+    if(state.userName) document.getElementById('profile-name').value = state.userName;
+    if(state.assistantName) document.getElementById('profile-assistant').value = state.assistantName;
     
-    if(state.userName && document.getElementById('profile-name')) 
-        document.getElementById('profile-name').value = state.userName;
+    // Reset modals
+    const libModal = document.getElementById('lib-modal');
+    if(libModal) libModal.classList.remove('open');
     
-    if(state.assistantName && document.getElementById('profile-assistant')) 
-        document.getElementById('profile-assistant').value = state.assistantName;
+    const videoModal = document.getElementById('addvideo-modal');
+    if(videoModal) videoModal.classList.remove('open');
   }
 
-  // Boot Seguro
-  document.addEventListener("DOMContentLoaded", () => {
-    initUI();
-  });
+  // Executa inicialização
+  window._dual_state = state;
+  initUI();
+  console.log("Sistema KOBLLUX Pronto.");
 
 })();
 </script>
+
+
+
+
 
 </body>
 </html>
