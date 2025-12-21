@@ -1,9 +1,9 @@
 // simples service worker para cache básico offline (adapte arquivos conforme necessário)
 const CACHE_NAME = 'dual-infodose-v1';
 const ASSETS = [
-  '/', // se servir como index.html
-  '/index.html',
-  '/manifest.json',
+  './', // se servir como index.html
+  './index.html',
+  './manifest.json',
   // adicione assets críticos (icons, css, etc) aqui
 ];
 
