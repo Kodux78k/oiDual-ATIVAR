@@ -667,19 +667,26 @@
 
 <script>
 /* -----------------------------
-   Dual Infodose — Unified Expanded
-   (Mesma lógica, com pequenas adaptações visuais se necessário)
+   Dual Infodose — KOBLLUX OS
+   (Versão Corrigida - Debug)
    ----------------------------- */
 
 (() => {
-  // ---------- ARCHETYPES ----------
+  // ---------- CONFIGURAÇÃO & CONSTANTES ----------
+  const STORAGE_KEYS = {
+    docs: 'dual_docs',
+    videos: 'dual_videos',
+    user: 'dual_user',
+    assistant: 'dual_assistant'
+  };
+
   const ARCHETYPES = [
     { id:'atlas', name:'Atlas', symbol:'(6_9)', mantra:'Eu ergo a base e inicio o caminho.', shadow:'Sombra: Sobrecarga (Mártir) ou Fuga.', voice:'Reed', rate:1.0, pitch:0.93, colorMain:'#38BDF8', colorSecondary:'#0EA5E9' },
     { id:'nova', name:'Nova', symbol:'(:_:)', mantra:'Eu expando com leveza e continuidade.', shadow:'Sombra: Dispersão e Falta de Foco.', voice:'Luciana', rate:1.06, pitch:1.1, colorMain:'#F97316', colorSecondary:'#FDBA74' },
     { id:'vitalis', name:'Vitalis', symbol:'(+_+)', mantra:'Eu ativo energia e movimento.', shadow:'Sombra: Impulsividade ou Agressividade.', voice:'Rocko', rate:0.96, pitch:1.2, colorMain:'#22C55E', colorSecondary:'#4ADE80' },
     { id:'pulse', name:'Pulse', symbol:'(~_~)', mantra:'Eu vibro no ritmo certo.', shadow:'Sombra: Ansiedade ou Apatia.', voice:'Reed', rate:1.0, pitch:1.14, colorMain:'#EC4899', colorSecondary:'#F9A8D4' },
     { id:'artemis', name:'Artemis', symbol:'(^_^) >-', mantra:'Eu foco e protejo o alvo.', shadow:'Sombra: Rigidez Cega ou Isolamento.', voice:'Luciana', rate:1.00, pitch:1.1, colorMain:'#A855F7', colorSecondary:'#C4B5FD' },
-    { id:'serena', name:'Serena', symbol:'(\\' _\\')', mantra:'Eu acalmo e confio no caminho.', shadow:'Sombra: Passividade ou Negação.', voice:'Joana', rate:0.92, pitch:0.90, colorMain:'#7dd3fc', colorSecondary:'#E0F2FE' },
+    { id:'serena', name:'Serena', symbol:'(\\\' _\\\')', mantra:'Eu acalmo e confio no caminho.', shadow:'Sombra: Passividade ou Negação.', voice:'Joana', rate:0.92, pitch:0.90, colorMain:'#7dd3fc', colorSecondary:'#E0F2FE' },
     { id:'kaos', name:'Kaos', symbol:'(!_!)', mantra:'Eu quebro e recrio com coragem.', shadow:'Sombra: Destruição sem propósito.', voice:'Rocko', rate:1.09, pitch:1.28, colorMain:'#FACC15', colorSecondary:'#FDE68A' },
     { id:'genus', name:'Genus', symbol:'=^=', mantra:'Eu projeto e construo com ordem.', shadow:'Sombra: Perfeccionismo paralisante.', voice:'Reed', rate:0.98, pitch:1.0, colorMain:'#9CA3AF', colorSecondary:'#E5E7EB' },
     { id:'lumine', name:'Lumine', symbol:'(o_o)', mantra:'Eu trago clareza simples e direta.', shadow:'Sombra: Superficialidade.', voice:'Luciana', rate:1.03, pitch:1.3, colorMain:'#FDE047', colorSecondary:'#FACC15' },
@@ -688,18 +695,15 @@
     { id:'kobllux', name:'KOBLLUX', symbol:'[K]', mantra:'Núcleo do sistema. Oracular.', shadow:'Sombra: Frio Absoluto.', voice:'Google', rate:0.90, pitch:0.8, colorMain:'#22D3EE', colorSecondary:'#06B6D4' }
   ];
 
-  // ---------- STATE ----------
-  const STORAGE_KEYS = {
-    docs: 'dual_docs',
-    videos: 'dual_videos',
-    user: 'dual_user',
-    assistant: 'dual_assistant'
-  };
+  // Carregamento Seguro do Estado (Evita crash por JSON inválido)
+  let safeDocs = [], safeVideos = [];
+  try { safeDocs = JSON.parse(localStorage.getItem(STORAGE_KEYS.docs) || '[]'); } catch(e){ console.error('Docs Reset', e); }
+  try { safeVideos = JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '[]'); } catch(e){ console.error('Videos Reset', e); }
 
   let state = {
     activeArch: ARCHETYPES[0],
-    docs: JSON.parse(localStorage.getItem(STORAGE_KEYS.docs) || '[]'),
-    videos: JSON.parse(localStorage.getItem(STORAGE_KEYS.videos) || '[]'),
+    docs: safeDocs,
+    videos: safeVideos,
     userName: localStorage.getItem(STORAGE_KEYS.user) || '',
     assistantName: localStorage.getItem(STORAGE_KEYS.assistant) || '',
     isSpeaking: false
@@ -721,11 +725,14 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
+  // Função centralizada para salvar (Resolve o bug de duplicação)
   function saveState(){
     localStorage.setItem(STORAGE_KEYS.docs, JSON.stringify(state.docs));
     localStorage.setItem(STORAGE_KEYS.videos, JSON.stringify(state.videos));
     localStorage.setItem(STORAGE_KEYS.user, state.userName);
     localStorage.setItem(STORAGE_KEYS.assistant, state.assistantName);
+    
+    // Atualiza UI em tempo real
     renderLibrary();
     renderVideos();
     renderLiveCards();
@@ -736,6 +743,16 @@
     return d.toLocaleString('pt-BR');
   }
 
+  function escapeHtml(unsafe) {
+    if(!unsafe && unsafe !== 0) return '';
+    return String(unsafe)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+
   // ---------- UI / THEME ----------
   function applyTheme(arch){
     const root = document.documentElement;
@@ -743,12 +760,19 @@
     root.style.setProperty('--accent2', arch.colorSecondary);
     root.style.setProperty('--accent-glow', hexToRgba(arch.colorMain, 0.4));
     
-    document.getElementById('ui-name') && (document.getElementById('ui-name').innerHTML = `${arch.symbol} ${arch.name}`);
-    document.getElementById('ui-mantra') && (document.getElementById('ui-mantra').innerText = arch.mantra);
-    document.getElementById('ui-shadow') && (document.getElementById('ui-shadow').innerText = arch.shadow);
+    const uiName = document.getElementById('ui-name');
+    if(uiName) uiName.innerHTML = `${arch.symbol} ${arch.name}`;
+    
+    const uiMantra = document.getElementById('ui-mantra');
+    if(uiMantra) uiMantra.innerText = arch.mantra;
+    
+    const uiShadow = document.getElementById('ui-shadow');
+    if(uiShadow) uiShadow.innerText = arch.shadow;
+
     document.querySelectorAll('.picker-chip').forEach(c=>c.classList.remove('active'));
     const chip = document.querySelector(`.picker-chip[data-id="${arch.id}"]`);
     if(chip) chip.classList.add('active');
+    
     state.activeArch = arch;
   }
 
@@ -775,12 +799,14 @@
 
   // ---------- TTS ----------
   function ensureVoices(callback){
+    if(!synth) return;
     let voices = synth.getVoices();
     if(voices.length>0) return callback(voices);
     synth.onvoiceschanged = () => callback(synth.getVoices());
   }
 
   window.toggleSpeech = function(){
+    if(!synth) return;
     if(state.isSpeaking){
       synth.cancel();
       state.isSpeaking = false;
@@ -807,6 +833,8 @@
     const spectrum = document.getElementById('spectrum');
     const status = document.getElementById('status-pill');
     const playText = document.getElementById('play-status');
+    if(!spectrum || !status || !playText) return;
+
     if(playing){
       spectrum.classList.add('active');
       status.innerText='TRANSMITINDO';
@@ -865,6 +893,7 @@
 
   function renderLibrary(){
     const container = document.getElementById('lib-content');
+    if(!container) return;
     container.innerHTML = '';
     if(!state.docs || state.docs.length === 0) {
       container.innerHTML = '<div style="text-align:center;color:var(--text-muted);margin-top:30px;font-style:italic">Nenhum dado capturado.</div>';
@@ -890,11 +919,11 @@
   window.deleteDoc = function(index){
     state.docs.splice(index,1);
     saveState();
-    renderLibrary();
   }
 
   function updateLibraryUI(){
-    document.getElementById('count-label').innerText = state.docs.length > 0 ? `${state.docs.length}` : '0';
+    const label = document.getElementById('count-label');
+    if(label) label.innerText = state.docs.length > 0 ? `${state.docs.length}` : '0';
   }
 
   // ---------- VIDEO HANDLER ----------
@@ -920,11 +949,11 @@
     state.videos.unshift(v);
     saveState();
     closeAddVideo();
-    renderVideos();
   }
 
   function renderVideos(){
     const list = document.getElementById('video-list');
+    if(!list) return;
     list.innerHTML = '';
     if(!state.videos || state.videos.length===0) { list.innerHTML = '<div class="small" style="color:var(--text-muted)">Nenhum vídeo.</div>'; return; }
     state.videos.forEach((v, i)=>{
@@ -944,12 +973,11 @@
   window.deleteVideo = function(index){
     state.videos.splice(index,1);
     saveState();
-    renderVideos();
   }
 
   function findVideoById(id){ return state.videos.find(v=>String(v.id)===String(id)) }
 
-  // ---------- InfoDoc generation & download ----------
+  // ---------- DOC GENERATION ----------
   function generateInfoDoc(video){
     const arch = state.activeArch;
     const contentMd = `# InfoDoc — ${video.title || 'Vídeo'}
@@ -968,22 +996,16 @@
 
 Gerado pelo Dual Infodose — KOBLLUX
 `;
-    const contentJson = {
-      meta:{ user: state.userName||'Viajante', date: new Date().toISOString() },
-      video,
-      arch
-    };
-    return { md: contentMd, json: JSON.stringify(contentJson, null, 2) };
+    return contentMd;
   }
 
   window.generateInfoDocFromVideo = function(id){
     const v = findVideoById(id);
     if(!v) return alert('Vídeo não encontrado');
-    const files = generateInfoDoc(v);
-    downloadBlob(files.md, `${sanitizeFilename(v.title || 'infodoc')}.md`, 'text/markdown;charset=utf-8');
+    const content = generateInfoDoc(v);
+    downloadBlob(content, `${sanitizeFilename(v.title || 'infodoc')}.md`, 'text/markdown;charset=utf-8');
     state.docs.unshift({ id: Date.now(), title: `${state.activeArch.name} — ${v.title}`, desc: state.activeArch.mantra, time: formatDate(), source:v.url });
     saveState();
-    renderLibrary();
   }
 
   function downloadBlob(content, filename, mime='text/plain'){
@@ -998,20 +1020,17 @@ Gerado pelo Dual Infodose — KOBLLUX
     return (name || 'file').replace(/[^\w\d_\-\. ]+/g,'').slice(0,120);
   }
 
-  // Download a single doc as .md by id
   window.downloadDoc = function(id){
     const doc = state.docs.find(d=>String(d.id)===String(id));
     if(!doc) return alert('Documento não encontrado');
     downloadBlob(`# ${doc.title}\n\n${doc.desc}\n\n${doc.time}`, sanitizeFilename(doc.title)+'.md');
   }
 
-  // Download all docs as JSON
   window.downloadAllDocs = function(){
     const pack = { user: state.userName||'Viajante', date: new Date().toISOString(), docs: state.docs, videos: state.videos };
     downloadBlob(JSON.stringify(pack,null,2), `dual_infodose_backup_${Date.now()}.json`, 'application/json');
   }
 
-  // Export / Import session
   window.exportSession = function(){ downloadAllDocs(); }
 
   window.importSession = function(e){
@@ -1051,10 +1070,11 @@ Gerado pelo Dual Infodose — KOBLLUX
     saveState();
     document.getElementById('user-welcome').innerText = `AGENTE: ${state.userName}`;
     shortBeep("Protocolo Aceito");
-    // visual feedback
     const btn = document.querySelector('.primary');
-    btn.innerText = 'Ativado!';
-    setTimeout(()=>btn.innerText='Ativar', 1500);
+    if(btn){
+        btn.innerText = 'Ativado!';
+        setTimeout(()=>btn.innerText='Ativar', 1500);
+    }
   }
 
   window.clearProfile = function(){
@@ -1069,9 +1089,10 @@ Gerado pelo Dual Infodose — KOBLLUX
     updateLibraryUI();
   }
 
-  // ---------- LIVE CARDS (smaller view) ----------
+  // ---------- LIVE CARDS ----------
   function renderLiveCards(){
     const container = document.getElementById('live-cards');
+    if(!container) return;
     container.innerHTML = '';
     if(!state.docs || state.docs.length===0){
       container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:12px; font-style:italic">Vazio.</div>';
@@ -1093,22 +1114,12 @@ Gerado pelo Dual Infodose — KOBLLUX
     if(cards[0]) cards[0].style.borderColor = state.activeArch.colorMain;
   }
 
-  // ---------- UTIL ----------
-  function escapeHtml(unsafe) {
-    if(!unsafe && unsafe !== 0) return '';
-    return String(unsafe)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#039;');
-  }
-
-  // ---------- PWA: beforeinstallprompt ----------
+  // ---------- PWA ----------
   window.addEventListener('beforeinstallprompt', (e)=>{
     e.preventDefault();
     deferredPrompt = e;
-    document.getElementById('prompt-install').style.display = 'inline-block';
+    const btn = document.getElementById('prompt-install');
+    if(btn) btn.style.display = 'inline-block';
   });
 
   window.promptInstall = async function(){
@@ -1121,74 +1132,73 @@ Gerado pelo Dual Infodose — KOBLLUX
     }
   }
 
-  // ---------- Service Worker registration ----------
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').then(reg=>{
-      console.log('SW registrado', reg);
-    }).catch(err=>console.warn('SW erro', err));
+    navigator.serviceWorker.register('sw.js').catch(err=>{});
   }
 
-  // ---------- SPLASH / BOOT ----------
+  // ---------- SPLASH / BOOT (A PARTE QUE VOCÊ ESTAVA DEBUGANDO) ----------
   window.initSystem = function(){
-    const name = document.getElementById('splash-name').value.trim();
+    console.log("Iniciando Sistema..."); // Log para Debug
+    const nameInput = document.getElementById('splash-name');
+    const name = nameInput ? nameInput.value.trim() : '';
+    
     state.userName = name || state.userName || 'Viajante';
-    localStorage.setItem(STORAGE_KEYS.user, state.userName);
-    document.getElementById('profile-name').value = state.userName;
-    document.getElementById('user-welcome').innerText = `Agente: ${state.userName}`;
+    saveState(); // Salva o nome
+    
+    // Atualiza UI
+    const pName = document.getElementById('profile-name');
+    if(pName) pName.value = state.userName;
+    
+    const uWelcome = document.getElementById('user-welcome');
+    if(uWelcome) uWelcome.innerText = `Agente: ${state.userName}`;
     
     // Animação de saída
     const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(()=>{
-        splash.classList.add('hidden');
-        document.querySelector('.shell').classList.add('visible');
-    }, 800);
+    if(splash){
+        splash.style.opacity = '0';
+        setTimeout(()=>{
+            splash.classList.add('hidden');
+            document.querySelector('.shell').classList.add('visible');
+        }, 800);
+    }
 
-    // unlock TTS
-    const welcome = `Sistema KOBLLUX online. Bem-vindo, ${state.userName}.`;
-    const u = new SpeechSynthesisUtterance(welcome);
-    u.lang = 'pt-BR';
-    ensureVoices((voices)=>{ if(voices[0]) u.voice = voices[0]; synth.speak(u); });
+    // TTS Inicial (Se suportado)
+    if(synth){
+        const welcome = `Sistema KOBLLUX online. Bem-vindo, ${state.userName}.`;
+        const u = new SpeechSynthesisUtterance(welcome);
+        u.lang = 'pt-BR';
+        ensureVoices((voices)=>{ if(voices[0]) u.voice = voices[0]; synth.speak(u); });
+    }
   };
 
   // Clock
-  setInterval(()=>{ document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) }, 1000);
+  setInterval(()=>{ 
+      const clock = document.getElementById('clock');
+      if(clock) clock.innerText = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }, 1000);
 
-  // ---------- SESSION IMPORT helper ----------
-  window.importSessionFromInput = function(ev){
-    importSession(ev);
-  }
-
-  // ---------- INITIALIZE UI ----------
+  // ---------- INITIALIZE UI (GARANTIDO NO DOMREADY) ----------
   function initUI(){
     buildPicker();
     applyTheme(state.activeArch);
     renderLiveCards();
     renderVideos();
     updateLibraryUI();
-    if(state.userName) document.getElementById('profile-name').value = state.userName;
-    if(state.assistantName) document.getElementById('profile-assistant').value = state.assistantName;
-    document.getElementById('lib-modal').classList.remove('open');
-    document.getElementById('addvideo-modal').classList.remove('open');
-    window.downloadAllDocs = downloadAllDocs;
+    
+    if(state.userName && document.getElementById('profile-name')) 
+        document.getElementById('profile-name').value = state.userName;
+    
+    if(state.assistantName && document.getElementById('profile-assistant')) 
+        document.getElementById('profile-assistant').value = state.assistantName;
   }
 
-  function saveState(){ saveStateInner(); }
-  function saveStateInner(){
-    localStorage.setItem(STORAGE_KEYS.docs, JSON.stringify(state.docs));
-    localStorage.setItem(STORAGE_KEYS.videos, JSON.stringify(state.videos));
-    localStorage.setItem(STORAGE_KEYS.user, state.userName);
-    localStorage.setItem(STORAGE_KEYS.assistant, state.assistantName);
-    renderLibrary();
-    renderVideos();
-    renderLiveCards();
-    updateLibraryUI();
-  }
-
-  window._dual_state = state;
-  initUI();
+  // Boot Seguro
+  document.addEventListener("DOMContentLoaded", () => {
+    initUI();
+  });
 
 })();
 </script>
+
 </body>
 </html>
