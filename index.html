@@ -2,9 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>DUAL // FUSION OS — Morph & Stagger</title>
+  <title>DUAL // FUSION — Recursive Fractal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  
+  <meta name="theme-color" content="#030406">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#030406">
   <link rel="apple-touch-icon" href="./icon-192.png">
@@ -15,716 +19,361 @@
         .catch(err => console.error('SW Error:', err));
     }
   </script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.7/purify.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/postcss-selector-parser@7.1.1/dist/index.umd.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
   <style>
     :root {
       --bg-deep: #030406;
-      --glass-surface: rgba(18, 18, 22, 0.65);
-      --glass-border: rgba(255, 255, 255, 0.06);
+      --glass-surface: rgba(20, 20, 25, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.08);
       --neon-cyan: #00f2ff;
       --neon-purple: #bd00ff;
-      --neon-orange: #ff9a3c;
-      --font-ui: 'Montserrat', sans-serif;
-      --font-code: 'JetBrains Mono', monospace;
-      --ease-overshoot: cubic-bezier(0.34, 1.3, 0.64, 1);
+      --ease-elastic: cubic-bezier(0.34, 1.3, 0.64, 1);
       --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
     }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
     
-    /* Scrollbar Customizada */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg-deep); }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-
     body {
       margin: 0; padding: 0;
       min-height: 100vh;
       background-color: var(--bg-deep);
       color: #fff;
-      font-family: var(--font-ui);
-      display: flex;
-      justify-content: center;
-      /* Correção Scroll Y: removemos overflow hidden e usamos auto */
-      overflow-y: auto; 
-      overflow-x: hidden;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 50px 50px;
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden; /* Previne scroll lateral no mobile */
+      overflow-y: auto;   /* Scroll vertical nativo */
+      display: flex; justify-content: center; align-items: center;
+      background-image: radial-gradient(circle at 50% 50%, rgba(20,20,30,1) 0%, rgba(3,4,6,1) 100%);
     }
 
-    /* Ambient Light (Fixo ao fundo) */
-    .ambient-light { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-    .blob { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.15; animation: float 25s infinite alternate ease-in-out; }
-    .blob-1 { width: 60vw; height: 60vw; background: var(--neon-cyan); top: -20%; left: -20%; }
-    .blob-2 { width: 50vw; height: 50vw; background: var(--neon-purple); bottom: -20%; right: -20%; animation-delay: -5s; }
-    @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(40px,60px); } }
+    /* Ambient Blobs */
+    .blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.15; z-index: -1; animation: float 20s infinite alternate; }
+    .b1 { width: 300px; height: 300px; background: var(--neon-cyan); top: -50px; left: -50px; }
+    .b2 { width: 350px; height: 350px; background: var(--neon-purple); bottom: -50px; right: -50px; animation-delay: -5s; }
+    @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(30px,50px); } }
 
-    /* Container permite o card crescer e a página rolar */
+    /* CONTAINER PRINCIPAL */
     .container {
       width: 100%;
-      max-width: 640px;
-      padding: 40px 20px 80px 20px; /* Padding bottom extra para mobile */
-      z-index: 10;
-      perspective: 1200px;
+      min-height: 100vh; /* Garante altura para alinhar */
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      justify-content: center; /* Centraliza verticalmente se o card for pequeno */
+      justify-content: center;
+      padding: 20px 10px; /* Padding lateral seguro para mobile */
     }
 
-    /* FUSION CARD */
+    /* O PAI (Card Principal) */
     .fusion-card {
-      width: 100%; max-width: 330px;
-      background: var(--glass-surface);
-      backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-      border: 1px solid var(--glass-border);
-      border-radius: 36px;
-      padding: 30px 25px;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.8);
       position: relative;
-      overflow: hidden;
-      opacity: 0; transform: translateY(50px) scale(0.96);
-      display: flex; flex-direction: column; gap: 8px;
-      will-change: width, padding, border-radius, box-shadow, transform;
-      transition: opacity 0.6s, transform 0.6s var(--ease-smooth);
+      background: var(--glass-surface);
+      backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      border-radius: 32px;
+      
+      /* Morph States */
+      width: 280px;
+      padding: 20px;
+      transform: scale(0.98);
+      opacity: 0;
+      transition: width 0.5s var(--ease-elastic), padding 0.5s var(--ease-smooth), border-radius 0.5s, transform 0.5s;
+      
+      display: flex; flex-direction: column; gap: 15px;
+      overflow: hidden; /* Mantém o conteúdo contido na animação */
     }
 
-    .fusion-card.active { opacity: 1; transform: translateY(0) scale(1); }
+    .fusion-card.active { opacity: 1; transform: scale(1); }
 
-    /* ESTADO FECHADO */
-    .fusion-card.closed {
-      width: 260px; max-width: none;
-      padding: 14px 16px; border-radius: 22px;
-      box-shadow: 0 22px 70px rgba(0,0,0,0.75);
-      cursor: pointer;
+    /* Estado Aberto (Expandido) */
+    .fusion-card.open {
+      width: 100%;
+      max-width: 460px; /* Largura máxima desktop */
+      padding: 30px;
+      border-radius: 40px;
     }
+
+    /* Mobile Fix: Quando aberto no celular, ocupa quase tudo */
+    @media (max-width: 480px) {
+      .fusion-card.open { width: 95%; padding: 25px 20px; }
+    }
+
+    /* Header (Sempre visível) */
+    .card-header { display: flex; align-items: center; gap: 15px; cursor: pointer; user-select: none; }
+    .avatar-ring { 
+      width: 54px; height: 54px; border-radius: 50%; 
+      background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan));
+      padding: 2px; position: relative;
+    }
+    .avatar-inner { width: 100%; height: 100%; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .avatar-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
     
-    .fusion-card.closed .card-header { gap: 10px; margin-bottom: 0; }
-    .fusion-card.closed .brand-dual { font-size: 1.3rem; margin-top: 0; letter-spacing: -1px; }
-    .fusion-card.closed .greeting-row { font-size: 1rem; }
-    .fusion-card.closed .txt-thin,
-    .fusion-card.closed .card-body { display: none; }
-    .fusion-card.closed .avatar-slot { width: 52px; height: 52px; }
+    .header-info { display: flex; flex-direction: column; flex: 1; }
+    .brand { font-size: 1.6rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .status { font-size: 0.7rem; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
 
-    .fusion-card.animating { transition: none !important; pointer-events: none; }
-    .fusion-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); }
+    /* O FILHO (Blocos Recursivos) */
+    /* Esta classe faz os blocos internos parecerem mini-versões do card pai */
+    .recursive-block {
+      background: rgba(0,0,0,0.3); /* Um pouco mais escuro para profundidade */
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 15px;
+      opacity: 0; transform: translateY(10px); /* Stagger init */
+      transition: all 0.4s var(--ease-smooth);
+      display: none; /* Escondido quando fechado */
+    }
 
-    /* HEADER */
-    .card-header { display: flex; align-items: center; gap: 15px; margin-bottom: 18px; transition: margin 0.3s; }
-    .avatar-slot { width: 64px; height: 64px; flex-shrink: 0; border-radius: 12px; overflow: hidden; opacity: 0; transition: opacity 0.35s; }
-    .avatar-slot.shown { opacity: 1; }
+    .fusion-card.open .recursive-block { display: flex; flex-direction: column; gap: 10px; }
+    /* Animação de entrada */
+    .fusion-card.open .recursive-block.show { opacity: 1; transform: translateY(0); }
+
+    /* Stagger Delays */
+    .recursive-block:nth-child(2) { transition-delay: 0.1s; }
+    .recursive-block:nth-child(3) { transition-delay: 0.2s; }
+    .recursive-block:nth-child(4) { transition-delay: 0.3s; }
+
+    /* Inputs e Controles Minimalistas */
+    .cyber-input {
+      width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 0; color: #fff; font-family: 'JetBrains Mono'; font-size: 0.9rem;
+      transition: 0.3s;
+    }
+    .cyber-input:focus { border-bottom-color: var(--neon-cyan); }
+
+    /* Botões de Ícone (Minimal) */
+    .action-row { display: flex; gap: 10px; margin-top: 5px; }
+    .icon-btn {
+      flex: 1; height: 44px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px; color: rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+    .icon-btn.primary { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.3); color: var(--neon-cyan); }
     
-    .text-block { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-    .greeting-row { font-size: 1.5rem; line-height: 1; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-    .txt-thin { font-weight: 200; color: rgba(255,255,255,0.7); }
-    .txt-heavy { font-weight: 600; color: #fff; }
-
-    .brand-dual {
-      font-size: 2.2rem; font-weight: 900; line-height: 0.95; text-transform: uppercase; letter-spacing: -2px; margin-top: 4px;
-      background: linear-gradient(-45deg, #fff, var(--neon-cyan), var(--neon-purple), #fff);
-      background-size: 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      animation: gradientFlow 4s ease infinite;
-    }
-    @keyframes gradientFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-    .clock-widget { text-align: right; }
-    .time-display { font-family: var(--font-code); font-size: 1rem; color: rgba(255,255,255,0.5); font-weight: 700; }
-    .status-led { font-size: 0.6rem; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: block; }
-
-    /* CARD BODY & STAGGER */
-    .card-body { display: flex; flex-direction: column; gap: 12px; }
-    
-    .stagger-item { opacity: 0; transform: translateY(15px); transition: opacity 0.4s ease, transform 0.4s var(--ease-overshoot); }
-    .content-visible .stagger-item { opacity: 1; transform: translateY(0); }
-    .content-visible .stagger-item:nth-child(1) { transition-delay: 0.1s; }
-    .content-visible .stagger-item:nth-child(2) { transition-delay: 0.18s; }
-    .content-visible .stagger-item:nth-child(3) { transition-delay: 0.25s; }
-
-    .input-wrapper { position: relative; }
-    .cyber-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 16px 50px 16px 18px; color: #fff; font-family: var(--font-code); font-size: 0.9rem; transition: 0.2s; }
-    .cyber-input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,242,255,0.08); background: rgba(0,0,0,0.5); }
-    .input-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); }
-
-    .trigger-btn { width: 100%; padding: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5); font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: all 0.2s; }
-    .trigger-btn:hover { background: rgba(255,255,255,0.04); color: #fff; border-color: rgba(255,255,255,0.3); }
-
-    .hidden-modules { display: grid; grid-template-rows: 0fr; opacity: 0.6; transition: all 420ms var(--ease-smooth); }
-    .fusion-card.open .hidden-modules { grid-template-rows: 1fr; opacity: 1; margin-top: 10px; }
-    .modules-inner { overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding-top: 2px; }
-
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
-    .stat-box { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid transparent; transition: 0.2s; }
-    .stat-box:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); }
-    .stat-lbl { font-size: 0.55rem; text-transform: uppercase; color: rgba(255,255,255,0.4); display: block; margin-bottom: 4px; }
-    .stat-val { font-family: var(--font-code); font-size: 0.9rem; font-weight: 700; color: var(--neon-cyan); }
-
-    .progress-container { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; }
-    .bar-track { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin: 8px 0; }
-    .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple)); box-shadow: 0 0 10px var(--neon-cyan); transition: width 1.2s ease-out; }
-    .bar-meta { display: flex; justify-content: space-between; font-size: 0.6rem; color: rgba(255,255,255,0.4); font-family: var(--font-code); }
-
-    .html-module-slot { border: 1px solid var(--neon-orange); background: rgba(255,154,60,0.05); border-radius: 12px; padding: 12px; min-height: 56px; display: flex; align-items: center; justify-content: center; color: var(--neon-orange); font-size: 0.7rem; font-family: var(--font-code); text-align: center; }
-
-    /* SMALL PREVIEW */
-    .small-preview {
-      display: none; align-items: center; gap: 10px; margin-top: 8px; padding: 8px 10px;
-      border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03);
-      font-family: var(--font-code); font-size: 0.86rem; color: rgba(255,255,255,0.9); cursor: pointer; overflow: hidden;
-      transition: background 0.2s, transform 0.2s;
-    }
-    .small-preview:hover { background: rgba(255,255,255,0.05); }
-    .small-preview .mini-avatar { width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; }
-    .small-preview .small-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 110px); }
-    .small-preview .ident-badge { margin-left: auto; font-weight: 700; font-size: 0.78rem; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.02); }
-
-    .fusion-card.closed .small-preview { display: flex; }
-
-    .vibe-gold {
-      animation: vibePulse 1.6s infinite;
-      border: 1px solid rgba(255, 210, 80, 0.15) !important;
-      color: #ffd250 !important;
-    }
-    @keyframes vibePulse {
-      0% { box-shadow: 0 0 0 0 rgba(255,210,80,0.0); transform: translateY(0); }
-      40% { box-shadow: 0 0 12px 2px rgba(255,210,80,0.06); transform: translateY(-1px); }
-      100% { box-shadow: 0 0 0 0 rgba(255,210,80,0.0); transform: translateY(0); }
+    /* Área de Ativação ASCII Minimal */
+    .ascii-box {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.6);
+      white-space: pre; overflow-x: hidden; line-height: 1.2;
+      opacity: 0.7;
     }
 
-    /* ACTIVATION CARD */
-    .activation-wrap { display: flex; flex-direction: column; gap: 8px; }
-    .activation-toggle { display: flex; gap: 8px; align-items: center; cursor: pointer; padding: 4px 0; }
-    .activation-card { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.04); padding: 12px; border-radius: 10px; overflow: hidden; transition: all 320ms var(--ease-smooth); }
-    .activation-pre { font-family: var(--font-code); white-space: pre-wrap; margin: 0; padding: 10px; background: rgba(0,0,0,0.12); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.03); color: #fff; font-size: 0.8rem; overflow-x: auto; }
-    .activation-controls { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-    .activation-mini { display: flex; align-items: center; gap: 8px; }
-    .activation-mini .mini-avatar { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; background: #071018; display: inline-flex; align-items: center; justify-content: center; }
-    .activation-badge { font-family: var(--font-code); background: rgba(255,255,255,0.03); padding: 6px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.02); }
-    
-    .activation-hidden { max-height: 0; opacity: 0; padding: 0 12px; pointer-events: none; border: none; margin: 0; }
-    .activation-open { max-height: 600px; opacity: 1; padding: 12px; }
-
-    /* CodeMirror Override */
-    .CodeMirror { border-radius: 8px; background: #071018 !important; border: 1px solid rgba(255,255,255,0.1); }
-    .CodeMirror-scroll { max-height: 320px; }
-    .cm-s-material .CodeMirror-gutters { background: #071018 !important; border-right: 1px solid rgba(255,255,255,0.05); }
-
-    /* Responsividade */
-    @media (max-width: 420px) {
-      .fusion-card.closed { width: 90%; }
-      .brand-dual { font-size: 1.5rem; }
-      .container { padding: 20px 15px; }
+    /* O ESPÍRITO (Overlay Imersivo / Lime-Style) */
+    #immersiveLayer {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5, 5, 8, 0.96); /* Quase sólido */
+      backdrop-filter: blur(20px);
+      z-index: 999;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
     }
+    #immersiveLayer.active { opacity: 1; pointer-events: all; }
+
+    .immersive-header {
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .immersive-content {
+      flex: 1; width: 100%; height: 100%; border: none; display: block;
+      background: transparent;
+    }
+    .close-immersive {
+      background: transparent; border: 1px solid rgba(255,50,50,0.3); color: #ff5555;
+      padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer;
+      font-family: 'JetBrains Mono'; text-transform: uppercase;
+    }
+    .close-immersive:hover { background: rgba(255,0,0,0.1); }
+
   </style>
 </head>
 <body>
-  <div class="ambient-light">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+
+  <div id="immersiveLayer">
+    <div class="immersive-header">
+      <span style="font-family:'JetBrains Mono';font-size:0.8rem;color:var(--neon-cyan)">// MÓDULO VISUALIZADOR</span>
+      <button class="close-immersive" onclick="closeImmersive()">FECHAR CONEXÃO</button>
+    </div>
+    <div id="immersiveContainer" style="width:100%;height:100%;overflow:hidden"></div>
   </div>
 
   <div class="container">
-    <div class="fusion-card closed" id="mainCard" aria-expanded="false">
-      <div class="card-header" id="cardHeader" role="button" tabindex="0" aria-controls="cardBody">
-        <div class="avatar-slot" id="avatarTarget" aria-hidden="true"></div>
-
-        <div class="text-block">
-          <div class="greeting-row">
-            <span class="txt-thin" id="lblHello">Sistema</span>
-            <span class="txt-heavy" id="lblName">Convidado</span>
+    
+    <div class="fusion-card" id="mainCard">
+      
+      <div class="card-header" onclick="toggleCard()">
+        <div class="avatar-ring">
+          <div class="avatar-inner">
+             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" /></svg>
           </div>
-          <div class="brand-dual">DUAL</div>
         </div>
+        <div class="header-info">
+          <div class="brand">DUAL // FUSION</div>
+          <div class="status" id="statusText">AGUARDANDO</div>
+        </div>
+        <div id="chevron" style="opacity:0.5; transition:0.3s"><i data-lucide="chevron-down"></i></div>
+      </div>
 
-        <div class="clock-widget" aria-hidden="true">
-          <div class="time-display" id="clockTime">00:00</div>
-          <span class="status-led">ONLINE</span>
+      <div class="recursive-block">
+        <div style="font-size:0.7rem; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:5px">Identificação</div>
+        <input type="text" class="cyber-input" id="userInput" placeholder="Quem está no comando?" autocomplete="off">
+      </div>
+
+      <div class="recursive-block">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+          <span style="font-size:0.7rem; text-transform:uppercase; color:rgba(255,255,255,0.4)">Assinatura Digital</span>
+          <span style="font-size:0.6rem; color:var(--neon-purple)" id="versionBadge">v.369</span>
+        </div>
+        <div class="ascii-box" id="asciiTarget">
++----------------+
+| SYSTEM: READY  |
++----------------+
+        </div>
+        <div class="action-row">
+          <button class="icon-btn" onclick="copyAscii()" title="Copiar"><i data-lucide="copy" size="16"></i></button>
+          <button class="icon-btn" onclick="shareAscii()" title="Share"><i data-lucide="share-2" size="16"></i></button>
         </div>
       </div>
 
-      <div class="small-preview" id="smallPreview" title="Clique para expandir" role="button" tabindex="0">
-        <div class="mini-avatar" id="smallMiniAvatar" aria-hidden="true"></div>
-        <div class="small-text" id="smallText">Ativação aparecerá aqui</div>
-        <div class="ident-badge" id="smallIdent">--</div>
-      </div>
-
-      <div class="card-body" id="cardBody">
+      <div class="recursive-block">
+        <div style="font-size:0.7rem; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:5px">Injeção de Código</div>
         
-        <div class="input-wrapper stagger-item">
-          <input type="text" class="cyber-input" id="inputUser" placeholder="Identifique-se..." autocomplete="off" />
-          <i data-lucide="fingerprint" class="input-icon"></i>
+        <input type="file" id="fileInput" style="display:none" accept=".html,.htm,.txt">
+        
+        <div class="action-row">
+          <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Carregar Arquivo">
+            <i data-lucide="upload-cloud" size="18"></i>
+          </button>
+          
+          <button class="icon-btn primary" id="injectBtn" title="Executar Imersão" disabled>
+            <i data-lucide="play" size="18"></i>
+          </button>
         </div>
-
-        <button class="trigger-btn stagger-item" id="accordionTrigger">
-          <span id="triggerText">ABRIR MÓDULOS</span>
-          <i data-lucide="chevron-down" id="triggerIcon"></i>
-        </button>
-
-        <div class="activation-wrap stagger-item">
-          <div class="activation-toggle" id="activationToggle">
-            <div style="display:flex;align-items:center;gap:8px">
-              <div style="width:10px;height:10px;border-radius:99px;background:var(--neon-cyan)"></div>
-              <strong style="letter-spacing:1px;font-size:0.9rem">Ativação ASCII</strong>
-            </div>
-            <div style="margin-left:auto;font-size:0.82rem;color:rgba(255,255,255,0.6)">BASE v1</div>
-          </div>
-
-          <div id="activationCard" class="activation-card activation-hidden">
-            <div style="display:flex;align-items:flex-start;gap:10px">
-              <div class="activation-mini">
-                <div class="mini-avatar" id="actMiniAvatar"></div>
-                <div style="display:flex;flex-direction:column;">
-                  <div id="actTitle" style="font-weight:700;font-size:0.85rem">CÉREBRO-ORÁCULO — BASE v1</div>
-                  <div style="font-size:0.75rem;color:rgba(255,255,255,0.55)">User: <span id="actName">(Convidado)</span></div>
-                </div>
-              </div>
-              <div style="margin-left:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-                <div class="activation-badge" id="actBadge">v:--</div>
-              </div>
-            </div>
-
-            <pre id="actPre" class="activation-pre" aria-live="polite"></pre>
-
-            <div class="activation-controls">
-              <button class="trigger-btn" id="copyActBtn" type="button" style="flex:1">COPIAR</button>
-              <button class="trigger-btn" id="downloadActBtn" type="button" style="flex:1">PNG</button>
-              <button class="trigger-btn" id="waActBtn" type="button" title="WhatsApp"><i data-lucide="message-circle"></i></button>
-            </div>
-          </div>
-        </div>
-
-        <div class="hidden-modules stagger-item" id="modulesArea">
-          <div class="modules-inner">
-            <div class="stats-grid">
-              <div class="stat-box">
-                <span class="stat-lbl">LATÊNCIA</span>
-                <span class="stat-val">12ms</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-lbl">CPU</span>
-                <span class="stat-val">FUSION</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-lbl">RITMO</span>
-                <span class="stat-val">BETA</span>
-              </div>
-            </div>
-
-            <div class="progress-container">
-              <div class="bar-meta">
-                <span>CICLO DIÁRIO</span>
-                <span id="cyclePercent">0%</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" id="cycleFill"></div></div>
-            </div>
-
-            <div class="html-module-slot" id="moduleHost">
-              <div id="moduleControls" style="display:flex;flex-direction:column;gap:10px;width:100%">
-
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                  <label style="flex:1">
-                    <input id="fileInput" type="file" accept=".html,.htm,.md,.markdown,.css,.txt" style="display:none" />
-                    <button class="trigger-btn" id="chooseBtn" type="button">Carregar Arquivo</button>
-                  </label>
-                  <button class="trigger-btn" id="crystallizeBtn" type="button" title="Salvar">SALVAR</button>
-                  <button class="trigger-btn" id="clearModulesBtn" type="button" title="Limpar">X</button>
-                </div>
-
-                <div id="dropZone" style="border-radius:10px;padding:15px;border:1px dashed rgba(255,255,255,0.1);font-size:0.75rem;text-align:center;transition:0.2s">
-                  Arraste arquivos ou clique acima.
-                </div>
-
-                <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;">
-                  <button class="trigger-btn" id="injectBtn" type="button" style="flex:2;border-color:var(--neon-cyan);color:var(--neon-cyan)">INJETAR</button>
-                  <button class="trigger-btn" id="removePreviewBtn" type="button" style="flex:1">LIMPAR</button>
-                </div>
-
-                <div id="previewArea" style="margin-top:10px;border-radius:12px;background:rgba(0,0,0,0.18);padding:10px;min-height:40px;">
-                  <div id="previewMeta" style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-bottom:6px;">Aguardando...</div>
-                  <div id="previewInner" style="border-radius:8px;overflow:hidden;"></div>
-                </div>
-
-                <details style="margin-top:10px;color:rgba(255,255,255,0.9)">
-                  <summary style="cursor:pointer;padding:10px;border-radius:8px;background:rgba(255,255,255,0.04);font-size:0.8rem">Editor CSS (Live)</summary>
-                  <div style="display:flex;gap:8px;flex-direction:column;padding-top:10px;">
-                    <textarea id="cssEditor" placeholder="Escreva CSS..." style="display:none"></textarea>
-                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-                      <label style="font-size:0.75rem;color:rgba(255,255,255,0.6);margin-right:auto">
-                        <input type="checkbox" id="scopeCss" checked /> Prefixar (.fusion-card)
-                      </label>
-                      <button class="trigger-btn" id="resetCssBtn" style="width:auto;padding:8px 16px">Reset</button>
-                    </div>
-                  </div>
-                </details>
-                
-                <div id="savedModulesList" style="margin-top:8px;"></div>
-              </div>
-            </div>
-            </div>
-        </div>
+        <div id="fileName" style="font-size:0.65rem; color:rgba(255,255,255,0.3); text-align:center; margin-top:5px; min-height:1em"></div>
       </div>
+
     </div>
   </div>
 
   <script>
-    // --- UTILS & GLOBAL STATE ---
-    const els = {
-      card: document.getElementById('mainCard'),
-      header: document.getElementById('cardHeader'),
-      avatarTgt: document.getElementById('avatarTarget'),
-      input: document.getElementById('inputUser'),
-      lblHello: document.getElementById('lblHello'),
-      lblName: document.getElementById('lblName'),
-      clock: document.getElementById('clockTime'),
-      triggerBtn: document.getElementById('accordionTrigger'),
-      triggerText: document.getElementById('triggerText'),
-      triggerIcon: document.getElementById('triggerIcon'),
-      smallPreview: document.getElementById('smallPreview'),
-      activationToggle: document.getElementById('activationToggle'),
-      activationCard: document.getElementById('activationCard'),
-      actPre: document.getElementById('actPre'),
-      actName: document.getElementById('actName'),
-      actBadge: document.getElementById('actBadge')
-    };
+    // Inicialização
+    lucide.createIcons();
+    const card = document.getElementById('mainCard');
+    const chevron = document.getElementById('chevron');
+    const statusText = document.getElementById('statusText');
+    const userInput = document.getElementById('userInput');
+    const asciiTarget = document.getElementById('asciiTarget');
+    
+    // Animação de Entrada
+    setTimeout(() => card.classList.add('active'), 100);
 
-    // --- AVATAR & VISUALS ---
-    function createAvatarSVG(id, size = 64) {
-      return `
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" aria-hidden="true">
-          <defs>
-            <linearGradient id="g${id}" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#00f2ff;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#bd00ff;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          <circle cx="50" cy="50" r="48" fill="#080b12" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-          <path d="M50 15 A35 35 0 0 1 85 50" stroke="url(#g${id})" stroke-width="4" fill="none" stroke-linecap="round">
-            <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="4s" repeatCount="indefinite"/>
-          </path>
-          <circle cx="50" cy="50" r="20" fill="url(#g${id})" opacity="0.8" filter="blur(3px)"/>
-        </svg>
-      `;
-    }
-    els.avatarTgt.innerHTML = createAvatarSVG('Main', 64);
+    // Lógica Morph (Pai abrindo para os Filhos)
+    function toggleCard() {
+      const isOpen = card.classList.contains('open');
+      const blocks = document.querySelectorAll('.recursive-block');
 
-    function hashString(str) {
-      let h = 0x811c9dc5;
-      for (let i = 0; i < str.length; i++) {
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 0x01000193);
-      }
-      return h >>> 0;
-    }
-
-    function makeMiniAvatarHTML(name, size = 30) {
-      const seed = hashString(name || 'DUAL');
-      const h1 = seed % 360;
-      const h2 = (seed * 37) % 360;
-      return `
-        <svg width="${size}" height="${size}" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width="32" height="32" rx="6" fill="#071018" />
-          <circle cx="16" cy="12" r="6" fill="hsl(${h1}, 100%, 55%)"/>
-          <path d="M16 24 a8 4 0 0 1 8 -4" stroke="hsl(${h2}, 90%, 65%)" stroke-width="2" fill="none" stroke-linecap="round"/>
-        </svg>
-      `;
-    }
-
-    function reduce369(name) {
-      if (!name || !name.trim()) return '--';
-      const s = name.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-      let root = s;
-      while (root > 9) root = String(root).split('').reduce((a, b) => a + Number(b), 0);
-      return root;
-    }
-
-    // --- CARD LOGIC (Morph & Stagger) ---
-    const morph = {
-      closed: { width: '260px', padding: '14px 16px', borderRadius: '22px', boxShadow: '0 22px 70px rgba(0,0,0,0.75)', scale: 0.99 },
-      open:   { width: '440px', padding: '30px 25px', borderRadius: '36px', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', scale: 1 }
-    };
-
-    function toggleCard(forceOpen = false) {
-      if (els.card.classList.contains('animating')) return;
-      const isClosed = els.card.classList.contains('closed');
-      
-      // Se forçar abertura e já estiver aberto, não faz nada
-      if (forceOpen && !isClosed) return;
-
-      const opening = isClosed;
-      const start = opening ? morph.closed : morph.open;
-      const end = opening ? morph.open : morph.closed;
-
-      els.card.classList.add('animating');
-
-      if (opening) {
-        els.card.classList.remove('closed');
-        els.card.setAttribute('aria-expanded', 'true');
-      } else {
-        els.card.classList.remove('content-visible');
-        if (els.card.classList.contains('open')) toggleModules(false); // Fecha módulos ao fechar card
-      }
-
-      // Aplica estilos iniciais para animação
-      Object.assign(els.card.style, {
-        width: start.width, padding: start.padding,
-        borderRadius: start.borderRadius, boxShadow: start.boxShadow,
-        transform: `scale(${start.scale})`
-      });
-
-      const anim = els.card.animate([
-        { width: start.width, padding: start.padding, borderRadius: start.borderRadius, boxShadow: start.boxShadow, transform: `scale(${start.scale})` },
-        { width: end.width, padding: end.padding, borderRadius: end.borderRadius, boxShadow: end.boxShadow, transform: `scale(${end.scale})` }
-      ], {
-        duration: opening ? 600 : 450,
-        easing: opening ? 'cubic-bezier(0.34, 1.3, 0.64, 1)' : 'cubic-bezier(0.23, 1, 0.32, 1)',
-        fill: 'forwards'
-      });
-
-      anim.onfinish = () => {
-        els.card.classList.remove('animating');
-        els.card.style = ''; // Limpa styles inline para o CSS assumir
-
-        if (opening) {
-          els.card.classList.add('content-visible');
-          if(forceOpen) setTimeout(() => els.input.focus(), 100);
-        } else {
-          els.card.classList.add('closed');
-          els.card.setAttribute('aria-expanded', 'false');
-        }
-      };
-    }
-
-    function toggleModules(forceState) {
-      const currentlyOpen = els.card.classList.contains('open');
-      const shouldOpen = forceState !== undefined ? forceState : !currentlyOpen;
-
-      if (shouldOpen) {
-        els.card.classList.add('open');
-        els.triggerText.innerText = 'FECHAR MÓDULOS';
-        els.triggerIcon.setAttribute('data-lucide', 'chevron-up');
-      } else {
-        els.card.classList.remove('open');
-        els.triggerText.innerText = 'ABRIR MÓDULOS';
-        els.triggerIcon.setAttribute('data-lucide', 'chevron-down');
-      }
-      lucide.createIcons();
-    }
-
-    // --- ACTIVATION LOGIC ---
-    function updateActivation(name) {
-      const root = reduce369(name);
-      const safeName = name ? name.trim() : 'Convidado';
-      
-      // Update UI elements
-      els.actName.innerText = `(${safeName}).Dual Infodose`;
-      els.actBadge.innerText = `v:${root}`;
-      
-      const vibeClass = 'vibe-gold';
-      els.actBadge.classList.remove(vibeClass);
-      els.smallPreview.classList.remove(vibeClass);
-      
-      if ([3, 6, 9].includes(root)) {
-        els.actBadge.classList.add(vibeClass);
-        els.smallPreview.classList.add(vibeClass);
-      }
-
-      const miniHtml = makeMiniAvatarHTML(safeName, 36);
-      document.getElementById('actMiniAvatar').innerHTML = miniHtml;
-      document.getElementById('smallMiniAvatar').innerHTML = makeMiniAvatarHTML(safeName, 30);
-
-      // ASCII
-      const ascii = 
-`+------------------------------+
-| CÉREBRO-ORÁCULO — BASE v1    |
-+------------------------------+
-Ativar: (${safeName}).Dual Infodose
-Status: [AGUARDANDO SINTONIA...]`;
-      els.actPre.innerText = ascii;
-
-      // Small Preview Text
-      const PHRASES = ["Foco.", "Criar.", "Fluir.", "Paz."];
-      const phrase = PHRASES[new Date().getHours() % PHRASES.length];
-      document.getElementById('smallText').innerText = safeName ? `${safeName} · ${phrase}` : 'Ativação pendente';
-      document.getElementById('smallIdent').innerText = `v:${root}`;
-    }
-
-    // --- EVENTS ---
-    document.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      
-      // Animação de entrada
-      setTimeout(() => {
-        els.card.classList.add('active');
-        els.avatarTgt.classList.add('shown');
-        const saved = localStorage.getItem('fusion_user');
-        if(saved) {
-          els.input.value = saved;
-          els.lblHello.innerText = 'Oi,'; els.lblName.innerText = saved;
-          updateActivation(saved);
-        } else {
-          updateActivation('');
-        }
-      }, 100);
-
-      // Bindings
-      els.header.addEventListener('click', () => toggleCard());
-      els.header.addEventListener('keydown', (e) => { if(e.key === 'Enter') toggleCard(); });
-      
-      // Small Preview Click Logic
-      els.smallPreview.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleCard(true); // Força abertura
-      });
-
-      els.triggerBtn.addEventListener('click', () => toggleModules());
-      els.activationToggle.addEventListener('click', () => {
-        els.activationCard.classList.toggle('activation-hidden');
-        els.activationCard.classList.toggle('activation-open');
-      });
-
-      els.input.addEventListener('input', (e) => {
-        const val = e.target.value;
-        els.lblHello.innerText = val ? 'Oi,' : 'Sistema';
-        els.lblName.innerText = val || 'Convidado';
-        updateActivation(val);
-      });
-      els.input.addEventListener('blur', (e) => {
-        if(e.target.value.trim()) localStorage.setItem('fusion_user', e.target.value.trim());
-      });
-
-      // Actions Activation
-      document.getElementById('copyActBtn').addEventListener('click', () => {
-        navigator.clipboard.writeText(els.actPre.innerText).then(() => alert('Copiado!'));
-      });
-      document.getElementById('downloadActBtn').addEventListener('click', async () => {
-        const el = els.activationCard;
-        const wasHidden = el.classList.contains('activation-hidden');
-        if(wasHidden) { el.classList.remove('activation-hidden'); el.classList.add('activation-open'); }
+      if (isOpen) {
+        // Fechar
+        card.classList.remove('open');
+        chevron.style.transform = 'rotate(0deg)';
+        statusText.innerText = 'AGUARDANDO';
+        statusText.style.color = 'var(--neon-cyan)';
         
-        try {
-          const canvas = await html2canvas(el, { backgroundColor: '#071018', scale: 2 });
-          const a = document.createElement('a');
-          a.href = canvas.toDataURL('image/png');
-          a.download = `activation-dual.png`;
-          a.click();
-        } catch(e) { console.error(e); }
+        // Esconde os filhos
+        blocks.forEach(b => b.classList.remove('show'));
+      } else {
+        // Abrir
+        card.classList.add('open');
+        chevron.style.transform = 'rotate(180deg)';
+        statusText.innerText = 'SINTONIZADO';
+        statusText.style.color = 'var(--neon-purple)';
         
-        if(wasHidden) { el.classList.add('activation-hidden'); el.classList.remove('activation-open'); }
-      });
+        // Revela os filhos em cascata
+        setTimeout(() => {
+          blocks.forEach(b => b.classList.add('show'));
+        }, 200);
+      }
+    }
+
+    // ASCII Reativo (Simples)
+    userInput.addEventListener('input', (e) => {
+      const val = e.target.value.toUpperCase() || 'UNKNOWN';
+      asciiTarget.innerText = `
++----------------+
+| USER: ${val.padEnd(8).slice(0,8)} |
+| SYNC: 3-6-9    |
++----------------+`;
     });
 
-    // Clock
-    setInterval(() => {
-      const now = new Date();
-      els.clock.innerText = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-      const pct = ((now.getHours() * 60 + now.getMinutes()) / 1440) * 100;
-      document.getElementById('cycleFill').style.width = `${pct}%`;
-      document.getElementById('cyclePercent').innerText = `${Math.floor(pct)}%`;
-    }, 1000);
+    function copyAscii() {
+      navigator.clipboard.writeText(asciiTarget.innerText);
+      statusText.innerText = 'COPIADO';
+      setTimeout(() => statusText.innerText = 'SINTONIZADO', 1000);
+    }
 
-    // --- MODULE SYSTEM (Isolated) ---
-    (function ModuleSystem() {
-      const dropZone = document.getElementById('dropZone');
-      const fileInput = document.getElementById('fileInput');
-      const previewInner = document.getElementById('previewInner');
-      const cssEditorEl = document.getElementById('cssEditor');
+    // --- LÓGICA DE INJEÇÃO (Lime-Style / Imersivo) ---
+    
+    let loadedContent = null;
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const injectBtn = document.getElementById('injectBtn');
+    const immersiveLayer = document.getElementById('immersiveLayer');
+    const immersiveContainer = document.getElementById('immersiveContainer');
+
+    // 1. Carregar Arquivo
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
       
-      let editorCM;
-      let currentFile = null;
+      fileName.innerText = `BUFFER: ${file.name}`;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        loadedContent = ev.target.result;
+        injectBtn.disabled = false;
+        injectBtn.style.opacity = '1';
+        statusText.innerText = 'BUFFER PRONTO';
+      };
+      reader.readAsText(file);
+    });
 
-      // Init CodeMirror safely
+    // 2. Injetar (Ativar o Espírito)
+    injectBtn.addEventListener('click', () => {
+      if (!loadedContent) return;
+
+      // Limpa container anterior
+      immersiveContainer.innerHTML = '';
+
+      // Cria iframe full screen (Sandbox)
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      // Permite scripts para o módulo funcionar, mas segura o resto
+      iframe.sandbox = "allow-scripts allow-same-origin allow-forms"; 
+      
+      // Sanitização básica (opcional, remova DOMPurify se quiser RAW total)
+      // iframe.srcdoc = DOMPurify.sanitize(loadedContent); 
+      iframe.srcdoc = loadedContent; // Modo RAW (Lime-style, sem frescura)
+
+      immersiveContainer.appendChild(iframe);
+
+      // Fade In Overlay
+      immersiveLayer.classList.add('active');
+    });
+
+    // 3. Fechar Imersão
+    window.closeImmersive = function() {
+      immersiveLayer.classList.remove('active');
       setTimeout(() => {
-        if (typeof CodeMirror !== 'undefined') {
-          editorCM = CodeMirror.fromTextArea(cssEditorEl, {
-            mode: 'css', theme: 'material', lineNumbers: true, viewportMargin: Infinity
-          });
-          editorCM.on('change', () => {
-            const css = editorCM.getValue();
-            if(document.getElementById('scopeCss').checked) applyCSS(css);
-          });
-        }
-      }, 500);
+        immersiveContainer.innerHTML = ''; // Limpa memória visual
+      }, 400);
+    }
 
-      // Handle Files
-      const handleFile = async (file) => {
-        const text = await file.text();
-        const ext = file.name.split('.').pop().toLowerCase();
-        currentFile = { name: file.name, type: ext, content: text };
-        document.getElementById('previewMeta').innerText = `${file.name} (${(file.size/1024).toFixed(1)}KB)`;
-        
-        previewInner.innerHTML = '';
-        if (ext === 'css') {
-          previewInner.innerHTML = `<pre style="font-size:0.7rem;padding:5px">${text.slice(0,300)}...</pre>`;
-          if(editorCM) editorCM.setValue(text);
-        } else if (['html','htm'].includes(ext)) {
-          const iframe = document.createElement('iframe');
-          iframe.style.width = '100%'; iframe.style.height = '150px'; iframe.style.border = 'none';
-          iframe.srcdoc = DOMPurify.sanitize(text);
-          previewInner.appendChild(iframe);
-        }
-      };
-
-      // Apply CSS with simple scope fallback
-      const applyCSS = (css) => {
-        const styleId = 'injected-css';
-        let style = document.getElementById(styleId);
-        if(!style) {
-          style = document.createElement('style'); style.id = styleId;
-          document.head.appendChild(style);
-        }
-        
-        // Simple scoping logic if PostCSS fails or isn't needed
-        const scoped = css.replace(/([^\r\n,{}]+)(?=\{)/g, '.fusion-card $1'); 
-        style.textContent = scoped;
-      };
-
-      // Events
-      document.getElementById('chooseBtn').addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', (e) => { if(e.target.files[0]) handleFile(e.target.files[0]); });
-      
-      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(255,255,255,0.05)'; });
-      dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.background = ''; });
-      dropZone.addEventListener('drop', (e) => {
-        e.preventDefault(); dropZone.style.background = '';
-        if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-      });
-
-      document.getElementById('injectBtn').addEventListener('click', () => {
-        if (!currentFile) return;
-        if (currentFile.type === 'css') {
-          if(editorCM) applyCSS(editorCM.getValue());
-          alert('CSS Injetado!');
-        } else {
-          const div = document.createElement('div');
-          div.className = 'module-crystallized';
-          div.style.marginTop = '10px';
-          // Sanitize
-          div.innerHTML = DOMPurify.sanitize(currentFile.content);
-          document.querySelector('.modules-inner').appendChild(div);
-        }
-      });
-      
-      document.getElementById('removePreviewBtn').addEventListener('click', () => {
-         currentFile = null; previewInner.innerHTML = ''; document.getElementById('previewMeta').innerText = 'Limpo';
-      });
-
-    })();
   </script>
 </body>
 </html>
