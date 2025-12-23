@@ -2,349 +2,369 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>DUAL // FUSION OS — Master Edition</title>
+  <title>DUAL // FUSION — Recursive Fractal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#030406">
 
-  <!-- Google Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
   <style>
     :root {
       --bg-deep: #030406;
-      --glass-surface: rgba(18, 18, 22, 0.7);
-      --glass-inner: rgba(255, 255, 255, 0.03);
+      --glass-surface: rgba(20, 20, 25, 0.75);
       --glass-border: rgba(255, 255, 255, 0.08);
       --neon-cyan: #00f2ff;
       --neon-purple: #bd00ff;
-      --neon-lime: #ccff00;
-      --font-ui: 'Montserrat', sans-serif;
-      --font-code: 'JetBrains Mono', monospace;
-      --ease-tech: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-elastic: cubic-bezier(0.34, 1.3, 0.64, 1);
+      --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
     }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
     
     body {
       margin: 0; padding: 0;
       min-height: 100vh;
       background-color: var(--bg-deep);
       color: #fff;
-      font-family: var(--font-ui);
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden; /* Previne scroll lateral no mobile */
+      overflow-y: auto;   /* Scroll vertical nativo */
       display: flex; justify-content: center; align-items: center;
-      overflow-x: hidden;
-      background-image: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.05) 0%, transparent 70%);
+      background-image: radial-gradient(circle at 50% 50%, rgba(20,20,30,1) 0%, rgba(3,4,6,1) 100%);
     }
 
-    /* --- CONTAINER & CARD MASTER --- */
+    /* Ambient Blobs */
+    .blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.15; z-index: -1; animation: float 20s infinite alternate; }
+    .b1 { width: 300px; height: 300px; background: var(--neon-cyan); top: -50px; left: -50px; }
+    .b2 { width: 350px; height: 350px; background: var(--neon-purple); bottom: -50px; right: -50px; animation-delay: -5s; }
+    @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(30px,50px); } }
+
+    /* CONTAINER PRINCIPAL */
     .container {
-      width: 100%; display: flex; justify-content: center; padding: 20px;
+      width: 100%;
+      min-height: 100vh; /* Garante altura para alinhar */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 10px; /* Padding lateral seguro para mobile */
     }
 
+    /* O PAI (Card Principal) */
     .fusion-card {
-      background: var(--glass-surface);
-      backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-      border: 1px solid var(--glass-border);
-      border-radius: 32px;
-      transition: all 0.6s var(--ease-tech);
-      overflow: hidden;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.8);
       position: relative;
+      background: var(--glass-surface);
+      backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      border-radius: 32px;
+      
+      /* Morph States */
+      width: 280px;
+      padding: 20px;
+      transform: scale(0.98);
+      opacity: 0;
+      transition: width 0.5s var(--ease-elastic), padding 0.5s var(--ease-smooth), border-radius 0.5s, transform 0.5s;
+      
+      display: flex; flex-direction: column; gap: 15px;
+      overflow: hidden; /* Mantém o conteúdo contido na animação */
     }
 
-    /* Estado: FECHADO (Monólito) */
-    .fusion-card.closed {
-      width: 280px; padding: 16px; border-radius: 24px; cursor: pointer;
+    .fusion-card.active { opacity: 1; transform: scale(1); }
+
+    /* Estado Aberto (Expandido) */
+    .fusion-card.open {
+      width: 100%;
+      max-width: 460px; /* Largura máxima desktop */
+      padding: 30px;
+      border-radius: 40px;
     }
 
-    /* Estado: ABERTO */
-    .fusion-card.expanded {
-      width: 100%; max-width: 440px; padding: 24px;
-    }
-
-    /* --- HEADER (IDENTIDADE) --- */
-    .card-header {
-      display: flex; align-items: center; gap: 15px;
-      user-select: none;
-    }
-
-    .avatar-trigger {
-      width: 54px; height: 54px; border-radius: 14px;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      padding: 2px; flex-shrink: 0; transition: transform 0.3s;
-    }
-    .avatar-trigger:active { transform: scale(0.9); }
-    .avatar-inner {
-      width: 100%; height: 100%; background: #080b12; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    .brand-block { flex: 1; }
-    .brand-dual { 
-      font-size: 1.6rem; font-weight: 900; letter-spacing: -1px; 
-      background: linear-gradient(90deg, #fff, var(--neon-cyan));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .brand-status { font-size: 0.6rem; font-family: var(--font-code); color: var(--neon-cyan); opacity: 0.8; }
-
-    /* --- FRACTAL ACCORDION (O SISTEMA INTELIGENTE) --- */
-    .content-wrapper {
-      max-height: 0; opacity: 0; transform: translateY(10px);
-      transition: all 0.5s var(--ease-tech);
-    }
-    .expanded > .content-wrapper {
-      max-height: 2000px; opacity: 1; transform: translateY(0);
-      margin-top: 20px;
-    }
-
-    /* Sub-cards (Nested) */
-    .nested-card {
-      background: var(--glass-inner);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 18px;
-      margin-bottom: 12px;
-      transition: all 0.4s var(--ease-tech);
-    }
-    .nested-card.open {
-      background: rgba(0,0,0,0.4);
-      border-color: rgba(255,255,255,0.15);
-    }
-
-    .nested-header {
-      padding: 15px; display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; font-size: 0.85rem; font-weight: 600;
-    }
-    .nested-header i { color: var(--neon-purple); transition: transform 0.4s; }
-    .nested-card.open .nested-header i.chevron { transform: rotate(180deg); color: var(--neon-cyan); }
-
-    .nested-body {
-      max-height: 0; overflow: hidden; opacity: 0;
-      transition: all 0.4s var(--ease-tech);
-      padding: 0 15px;
-    }
-    .nested-card.open .nested-body {
-      max-height: 800px; opacity: 1; padding-bottom: 15px;
-    }
-
-    /* --- UI ELEMENTS --- */
-    .cyber-input {
-      width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; padding: 12px; color: #fff; font-family: var(--font-code);
-      font-size: 0.8rem; margin-bottom: 10px;
-    }
-    .cyber-input:focus { border-color: var(--neon-cyan); }
-
-    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .action-btn {
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px; padding: 10px; color: #fff; cursor: pointer;
-      font-family: var(--font-code); font-size: 0.7rem; text-transform: uppercase;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      transition: 0.2s;
-    }
-    .action-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--neon-lime); color: var(--neon-lime); }
-
-    .ascii-box {
-      background: #000; border-radius: 10px; padding: 12px;
-      font-family: var(--font-code); font-size: 0.65rem; color: #0f0;
-      white-space: pre-wrap; border: 1px dashed rgba(0,255,0,0.2);
-    }
-
-    /* --- MOBILE PATCH --- */
+    /* Mobile Fix: Quando aberto no celular, ocupa quase tudo */
     @media (max-width: 480px) {
-      .fusion-card.expanded { width: 92vw; }
+      .fusion-card.open { width: 95%; padding: 25px 20px; }
     }
+
+    /* Header (Sempre visível) */
+    .card-header { display: flex; align-items: center; gap: 15px; cursor: pointer; user-select: none; }
+    .avatar-ring { 
+      width: 54px; height: 54px; border-radius: 50%; 
+      background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan));
+      padding: 2px; position: relative;
+    }
+    .avatar-inner { width: 100%; height: 100%; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .avatar-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+    
+    .header-info { display: flex; flex-direction: column; flex: 1; }
+    .brand { font-size: 1.6rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .status { font-size: 0.7rem; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+
+    /* O FILHO (Blocos Recursivos) */
+    /* Esta classe faz os blocos internos parecerem mini-versões do card pai */
+    .recursive-block {
+      background: rgba(0,0,0,0.3); /* Um pouco mais escuro para profundidade */
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 15px;
+      opacity: 0; transform: translateY(10px); /* Stagger init */
+      transition: all 0.4s var(--ease-smooth);
+      display: none; /* Escondido quando fechado */
+    }
+
+    .fusion-card.open .recursive-block { display: flex; flex-direction: column; gap: 10px; }
+    /* Animação de entrada */
+    .fusion-card.open .recursive-block.show { opacity: 1; transform: translateY(0); }
+
+    /* Stagger Delays */
+    .recursive-block:nth-child(2) { transition-delay: 0.1s; }
+    .recursive-block:nth-child(3) { transition-delay: 0.2s; }
+    .recursive-block:nth-child(4) { transition-delay: 0.3s; }
+
+    /* Inputs e Controles Minimalistas */
+    .cyber-input {
+      width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 0; color: #fff; font-family: 'JetBrains Mono'; font-size: 0.9rem;
+      transition: 0.3s;
+    }
+    .cyber-input:focus { border-bottom-color: var(--neon-cyan); }
+
+    /* Botões de Ícone (Minimal) */
+    .action-row { display: flex; gap: 10px; margin-top: 5px; }
+    .icon-btn {
+      flex: 1; height: 44px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px; color: rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+    .icon-btn.primary { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.3); color: var(--neon-cyan); }
+    
+    /* Área de Ativação ASCII Minimal */
+    .ascii-box {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.6);
+      white-space: pre; overflow-x: hidden; line-height: 1.2;
+      opacity: 0.7;
+    }
+
+    /* O ESPÍRITO (Overlay Imersivo / Lime-Style) */
+    #immersiveLayer {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5, 5, 8, 0.96); /* Quase sólido */
+      backdrop-filter: blur(20px);
+      z-index: 999;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    #immersiveLayer.active { opacity: 1; pointer-events: all; }
+
+    .immersive-header {
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .immersive-content {
+      flex: 1; width: 100%; height: 100%; border: none; display: block;
+      background: transparent;
+    }
+    .close-immersive {
+      background: transparent; border: 1px solid rgba(255,50,50,0.3); color: #ff5555;
+      padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer;
+      font-family: 'JetBrains Mono'; text-transform: uppercase;
+    }
+    .close-immersive:hover { background: rgba(255,0,0,0.1); }
+
   </style>
 </head>
 <body>
 
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+
+  <div id="immersiveLayer">
+    <div class="immersive-header">
+      <span style="font-family:'JetBrains Mono';font-size:0.8rem;color:var(--neon-cyan)">// MÓDULO VISUALIZADOR</span>
+      <button class="close-immersive" onclick="closeImmersive()">FECHAR CONEXÃO</button>
+    </div>
+    <div id="immersiveContainer" style="width:100%;height:100%;overflow:hidden"></div>
+  </div>
+
   <div class="container">
-    <div class="fusion-card closed" id="mainCard">
+    
+    <div class="fusion-card" id="mainCard">
       
-      <!-- HEADER (Click abre o Monólito) -->
-      <div class="card-header" id="masterTrigger">
-        <div class="avatar-trigger" id="dualAvatar">
+      <div class="card-header" onclick="toggleCard()">
+        <div class="avatar-ring">
           <div class="avatar-inner">
-            <i data-lucide="sparkles" size="20"></i>
+             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" /></svg>
           </div>
         </div>
-        <div class="brand-block">
-          <div class="brand-dual">DUAL</div>
-          <div class="brand-status" id="statusLabel">SYSTEM: STANDBY</div>
+        <div class="header-info">
+          <div class="brand">DUAL // FUSION</div>
+          <div class="status" id="statusText">AGUARDANDO</div>
         </div>
-        <div id="clockDisplay" style="font-family:var(--font-code); font-size:0.8rem; opacity:0.5">00:00</div>
+        <div id="chevron" style="opacity:0.5; transition:0.3s"><i data-lucide="chevron-down"></i></div>
       </div>
 
-      <!-- FRACTAL CONTENT -->
-      <div class="content-wrapper">
+      <div class="recursive-block">
+        <div style="font-size:0.7rem; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:5px">Identificação</div>
+        <input type="text" class="cyber-input" id="userInput" placeholder="Quem está no comando?" autocomplete="off">
+      </div>
+
+      <div class="recursive-block">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+          <span style="font-size:0.7rem; text-transform:uppercase; color:rgba(255,255,255,0.4)">Assinatura Digital</span>
+          <span style="font-size:0.6rem; color:var(--neon-purple)" id="versionBadge">v.369</span>
+        </div>
+        <div class="ascii-box" id="asciiTarget">
++----------------+
+| SYSTEM: READY  |
++----------------+
+        </div>
+        <div class="action-row">
+          <button class="icon-btn" onclick="copyAscii()" title="Copiar"><i data-lucide="copy" size="16"></i></button>
+          <button class="icon-btn" onclick="shareAscii()" title="Share"><i data-lucide="share-2" size="16"></i></button>
+        </div>
+      </div>
+
+      <div class="recursive-block">
+        <div style="font-size:0.7rem; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:5px">Injeção de Código</div>
         
-        <!-- MÓDULO 1: IDENTIDADE -->
-        <div class="nested-card">
-          <div class="nested-header" onclick="toggleNested(this, 'Módulo de Identidade.')">
-            <span><i data-lucide="user" size="16"></i> &nbsp; PERFIL USUÁRIO</span>
-            <i data-lucide="chevron-down" size="16" class="chevron"></i>
-          </div>
-          <div class="nested-body">
-            <input type="text" id="userName" class="cyber-input" placeholder="DIGITE SEU NOME..." oninput="syncUser(this.value)">
-            <div id="userBadge" style="font-size:0.6rem; color:var(--neon-lime); font-family:var(--font-code)">V:--</div>
-          </div>
+        <input type="file" id="fileInput" style="display:none" accept=".html,.htm,.txt">
+        
+        <div class="action-row">
+          <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Carregar Arquivo">
+            <i data-lucide="upload-cloud" size="18"></i>
+          </button>
+          
+          <button class="icon-btn primary" id="injectBtn" title="Executar Imersão" disabled>
+            <i data-lucide="play" size="18"></i>
+          </button>
         </div>
-
-        <!-- MÓDULO 2: ATIVAÇÃO 3-6-9 -->
-        <div class="nested-card">
-          <div class="nested-header" onclick="toggleNested(this, 'Protocolo de Ativação.')">
-            <span><i data-lucide="zap" size="16"></i> &nbsp; ATIVAÇÃO ASCII</span>
-            <i data-lucide="chevron-down" size="16" class="chevron"></i>
-          </div>
-          <div class="nested-body">
-            <div class="ascii-box" id="asciiDisplay">
-[ AGUARDANDO SINTONIA ]
-            </div>
-            <div class="btn-grid" style="margin-top:10px">
-              <button class="action-btn" onclick="copyAction()"><i data-lucide="copy" size="14"></i> COPY</button>
-              <button class="action-btn" onclick="shareAction()"><i data-lucide="share" size="14"></i> SHARE</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- MÓDULO 3: FUSION LAB -->
-        <div class="nested-card">
-          <div class="nested-header" onclick="toggleNested(this, 'Laboratório de Injeção.')">
-            <span><i data-lucide="binary" size="16"></i> &nbsp; FUSION LAB</span>
-            <i data-lucide="chevron-down" size="16" class="chevron"></i>
-          </div>
-          <div class="nested-body">
-            <div style="font-size:0.7rem; opacity:0.6; margin-bottom:10px">Injetar micro-código no monólito:</div>
-            <input type="file" id="labFile" style="display:none">
-            <button class="action-btn" style="width:100%" onclick="document.getElementById('labFile').click()">
-              <i data-lucide="upload-cloud" size="14"></i> CARREGAR CÓDIGO (.HTML)
-            </button>
-          </div>
-        </div>
-
+        <div id="fileName" style="font-size:0.65rem; color:rgba(255,255,255,0.3); text-align:center; margin-top:5px; min-height:1em"></div>
       </div>
+
     </div>
   </div>
 
   <script>
+    // Inicialização
     lucide.createIcons();
+    const card = document.getElementById('mainCard');
+    const chevron = document.getElementById('chevron');
+    const statusText = document.getElementById('statusText');
+    const userInput = document.getElementById('userInput');
+    const asciiTarget = document.getElementById('asciiTarget');
+    
+    // Animação de Entrada
+    setTimeout(() => card.classList.add('active'), 100);
 
-    const mainCard = document.getElementById('mainCard');
-    const masterTrigger = document.getElementById('masterTrigger');
-    const statusLabel = document.getElementById('statusLabel');
-    const dualAvatar = document.getElementById('dualAvatar');
-
-    // --- SISTEMA DE VOZ (TTS) ---
-    let dualVoice = null;
-    function initVoice() {
-      const voices = window.speechSynthesis.getVoices();
-      dualVoice = voices.find(v => v.lang.includes('pt-BR')) || voices[0];
-    }
-    window.speechSynthesis.onvoiceschanged = initVoice;
-
-    function speak(text) {
-      if (!text) return;
-      window.speechSynthesis.cancel();
-      const msg = new SpeechSynthesisUtterance(text);
-      if (dualVoice) msg.voice = dualVoice;
-      msg.rate = 1.1;
-      window.speechSynthesis.speak(msg);
-    }
-
-    // --- CONTROLE MONÓLITO (MORPHER) ---
-    masterTrigger.addEventListener('click', () => {
-      const isClosed = mainCard.classList.contains('closed');
-      
-      if (isClosed) {
-        mainCard.classList.remove('closed');
-        mainCard.classList.add('expanded');
-        statusLabel.innerText = 'SYSTEM: ACTIVE';
-        statusLabel.style.color = 'var(--neon-lime)';
-        speak('Dual Fusion ativado. Bem-vindo de volta.');
-      } else {
-        // Só fecha se clicar no cabeçalho novamente
-        mainCard.classList.add('closed');
-        mainCard.classList.remove('expanded');
-        statusLabel.innerText = 'SYSTEM: STANDBY';
-        statusLabel.style.color = 'var(--neon-cyan)';
-        // Fecha todos os internos
-        document.querySelectorAll('.nested-card').forEach(c => c.classList.remove('open'));
-      }
-    });
-
-    // Clique no Avatar (Interação Rápida)
-    dualAvatar.addEventListener('click', (e) => {
-      e.stopPropagation();
-      speak('Estou ouvindo. O que vamos criar agora?');
-    });
-
-    // --- CONTROLE ACORDEÃO FRACTAL (NESTED) ---
-    function toggleNested(header, speechText) {
-      const card = header.parentElement;
+    // Lógica Morph (Pai abrindo para os Filhos)
+    function toggleCard() {
       const isOpen = card.classList.contains('open');
-      
-      // Fecha outros para foco (Opcional, mas melhora UX)
-      // document.querySelectorAll('.nested-card').forEach(c => c.classList.remove('open'));
-      
-      if (!isOpen) {
-        card.classList.add('open');
-        speak(speechText);
-      } else {
+      const blocks = document.querySelectorAll('.recursive-block');
+
+      if (isOpen) {
+        // Fechar
         card.classList.remove('open');
-      }
-    }
-
-    // --- LÓGICA 3-6-9 & USUÁRIO ---
-    function get369(name) {
-      if (!name) return '--';
-      let sum = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      while (sum > 9) sum = String(sum).split('').reduce((a, b) => a + Number(b), 0);
-      return sum;
-    }
-
-    function syncUser(val) {
-      const root = get369(val);
-      document.getElementById('userBadge').innerText = `VIBRAÇÃO: ${root}`;
-      
-      const ascii = document.getElementById('asciiDisplay');
-      if (val) {
-        ascii.innerText = `
-+-----------------------+
-| DUAL // ACT: ${val.toUpperCase()}
-| FREQ: ${root}-${root*2}-${root*3}
-| STATUS: SINTONIZADO
-+-----------------------+
-        `.trim();
+        chevron.style.transform = 'rotate(0deg)';
+        statusText.innerText = 'AGUARDANDO';
+        statusText.style.color = 'var(--neon-cyan)';
+        
+        // Esconde os filhos
+        blocks.forEach(b => b.classList.remove('show'));
       } else {
-        ascii.innerText = "[ AGUARDANDO SINTONIA ]";
+        // Abrir
+        card.classList.add('open');
+        chevron.style.transform = 'rotate(180deg)';
+        statusText.innerText = 'SINTONIZADO';
+        statusText.style.color = 'var(--neon-purple)';
+        
+        // Revela os filhos em cascata
+        setTimeout(() => {
+          blocks.forEach(b => b.classList.add('show'));
+        }, 200);
       }
     }
 
-    // --- UTILITÁRIOS ---
-    function copyAction() {
-      const txt = document.getElementById('asciiDisplay').innerText;
-      navigator.clipboard.writeText(txt);
-      speak('Dados copiados.');
-    }
-
-    function shareAction() {
-      speak('Preparando link de compartilhamento.');
-    }
-
-    // Relógio
-    setInterval(() => {
-      const now = new Date();
-      document.getElementById('clockDisplay').innerText = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-    }, 1000);
-
-    // Lab File Ingestion
-    document.getElementById('labFile').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) speak('Arquivo ' + file.name + ' pronto para injeção.');
+    // ASCII Reativo (Simples)
+    userInput.addEventListener('input', (e) => {
+      const val = e.target.value.toUpperCase() || 'UNKNOWN';
+      asciiTarget.innerText = `
++----------------+
+| USER: ${val.padEnd(8).slice(0,8)} |
+| SYNC: 3-6-9    |
++----------------+`;
     });
+
+    function copyAscii() {
+      navigator.clipboard.writeText(asciiTarget.innerText);
+      statusText.innerText = 'COPIADO';
+      setTimeout(() => statusText.innerText = 'SINTONIZADO', 1000);
+    }
+
+    // --- LÓGICA DE INJEÇÃO (Lime-Style / Imersivo) ---
+    
+    let loadedContent = null;
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const injectBtn = document.getElementById('injectBtn');
+    const immersiveLayer = document.getElementById('immersiveLayer');
+    const immersiveContainer = document.getElementById('immersiveContainer');
+
+    // 1. Carregar Arquivo
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      fileName.innerText = `BUFFER: ${file.name}`;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        loadedContent = ev.target.result;
+        injectBtn.disabled = false;
+        injectBtn.style.opacity = '1';
+        statusText.innerText = 'BUFFER PRONTO';
+      };
+      reader.readAsText(file);
+    });
+
+    // 2. Injetar (Ativar o Espírito)
+    injectBtn.addEventListener('click', () => {
+      if (!loadedContent) return;
+
+      // Limpa container anterior
+      immersiveContainer.innerHTML = '';
+
+      // Cria iframe full screen (Sandbox)
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      // Permite scripts para o módulo funcionar, mas segura o resto
+      iframe.sandbox = "allow-scripts allow-same-origin allow-forms"; 
+      
+      // Sanitização básica (opcional, remova DOMPurify se quiser RAW total)
+      // iframe.srcdoc = DOMPurify.sanitize(loadedContent); 
+      iframe.srcdoc = loadedContent; // Modo RAW (Lime-style, sem frescura)
+
+      immersiveContainer.appendChild(iframe);
+
+      // Fade In Overlay
+      immersiveLayer.classList.add('active');
+    });
+
+    // 3. Fechar Imersão
+    window.closeImmersive = function() {
+      immersiveLayer.classList.remove('active');
+      setTimeout(() => {
+        immersiveContainer.innerHTML = ''; // Limpa memória visual
+      }, 400);
+    }
 
   </script>
 </body>
 </html>
-
