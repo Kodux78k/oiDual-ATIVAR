@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>DUAL // NEXUS — Stack Manager v12</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#050505">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-core: #050505;
+      --glass-surface: rgba(20, 20, 23, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-highlight: rgba(255, 255, 255, 0.12);
+      
+      /* Neon Palette */
+      --cyan: #00f2ff;
+      --purple: #bd00ff;
+      --green: #00ff9d;
+      --orange: #ff9100;
+      --danger: #ff2a2a;
+      
+      --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --font-ui: 'Inter', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      margin: 0; padding: 20px;
+      min-height: 100vh;
+      background-color: var(--bg-core);
+      color: #e2e8f0;
+      font-family: var(--font-ui);
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(189, 0, 255, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(0, 242, 255, 0.08), transparent 25%);
+    }
+
+    /* --- UI COMPONENTS --- */
+
+    /* Glass Cards */
+    .nexus-card {
+      background: var(--glass-surface);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nexus-card:hover { border-color: var(--glass-highlight); }
+    .nexus-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 242, 255, 0.15); }
+
+    /* Header Structure */
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .header-main { display: flex; flex-direction: column; flex: 1; overflow: hidden; cursor: pointer; }
+    
+    .title { font-weight: 800; font-size: 1rem; color: #fff; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta { font-family: var(--font-code); font-size: 0.7rem; color: #94a3b8; display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    
+    .badge { 
+      background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; 
+      font-weight: 700; font-size: 0.65rem; color: var(--cyan); border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* Action Dock */
+    .dock { display: flex; align-items: center; gap: 6px; }
+    .btn-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(255,255,255,0.03); border: 1px solid transparent;
+      color: #94a3b8; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .btn-icon:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
+    
+    .btn-icon.run { color: var(--green); background: rgba(0, 255, 157, 0.05); border-color: rgba(0, 255, 157, 0.1); }
+    .btn-icon.run:hover { background: var(--green); color: #000; box-shadow: 0 0 15px var(--green); }
+    
+    .btn-icon.del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    /* Inputs & Editors */
+    .editor-box {
+      width: 100%; background: rgba(0,0,0,0.4);
+      border: 1px solid var(--glass-border); border-radius: 12px;
+      padding: 15px; color: #e2e8f0; font-family: var(--font-code); font-size: 0.85rem;
+      line-height: 1.6; resize: vertical; min-height: 120px;
+      transition: border-color 0.3s;
+    }
+    .editor-box:focus { border-color: var(--cyan); }
+    
+    .cyber-input {
+      background: transparent; border: none; border-bottom: 1px solid var(--glass-border);
+      color: #fff; font-family: var(--font-code); padding: 8px 0; width: 100%; font-size: 0.9rem;
+      transition: 0.3s;
+    }
+    .cyber-input:focus { border-bottom-color: var(--cyan); }
+
+    /* Expandable Content */
+    .expandable-content { 
+      display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s var(--ease-elastic); opacity: 0;
+    }
+    .nexus-card.open .expandable-content { grid-template-rows: 1fr; opacity: 1; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-border); }
+    .inner-content { overflow: hidden; }
+
+    /* --- LAYOUT GRID --- */
+    .main-layout {
+      max-width: 600px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    /* Filter Bar */
+    .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 10px; }
+    .filter-pill {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: #666;
+      padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.3s;
+    }
+    .filter-pill.active { background: var(--cyan); color: #000; border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); }
+
+    /* IMMERSIVE VIEWER (FULLSCREEN INJECTOR) */
+    #immersive-layer {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000; display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    #immersive-layer.active { opacity: 1; pointer-events: all; }
+    
+    .immersive-toolbar {
+      height: 40px; background: #0a0a0a; border-bottom: 1px solid #222;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+    }
+    .sys-text { font-family: var(--font-code); font-size: 0.7rem; color: var(--green); letter-spacing: 1px; }
+    
+    .btn-terminate {
+      background: transparent; border: 1px solid var(--danger); color: var(--danger);
+      font-size: 0.6rem; font-weight: bold; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-transform: uppercase;
+    }
+    .btn-terminate:hover { background: var(--danger); color: #fff; }
+
+    #injector-frame { flex: 1; border: none; width: 100%; height: 100%; background: #fff; }
+
+  </style>
+</head>
+<body>
+
+  <div id="immersive-layer">
+    <div class="immersive-toolbar">
+      <span class="sys-text">RUNTIME // INJECTED_SESSION</span>
+      <button class="btn-terminate" onclick="closeInjector()">TERMINATE PROCESS</button>
+    </div>
+    <div id="frame-wrapper" style="width:100%; height:100%;"></div>
+  </div>
+
+  <div class="main-layout">
+
+    <div class="nexus-card active" id="creator-card">
+      <div class="card-header">
+        <div class="header-main" onclick="toggleCard('creator-card')">
+          <div class="title" style="background: linear-gradient(to right, #fff, #999); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+            ⚡ DUAL // INJECTOR
+          </div>
+          <div class="meta">SYSTEM READY • v12.0</div>
+        </div>
+        <div class="dock">
+          <button class="btn-icon" onclick="magicPaste()" title="Clipboard Auto-Save"><i data-lucide="clipboard-copy"></i></button>
+          <button class="btn-icon" onclick="toggleCard('creator-card')"><i data-lucide="chevron-down"></i></button>
+        </div>
+      </div>
+
+      <div class="expandable-content">
+        <div class="inner-content">
+          <textarea id="input-code" class="editor-box" placeholder="Cole seu código HTML, JS ou Texto aqui..."></textarea>
+          
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <input id="input-tag" class="cyber-input" placeholder="TAG (ex: APP, DOCS)" style="width: 30%;">
+            <button class="btn-icon" style="flex:1; width:auto; border-radius:8px; font-weight:bold; font-size:0.8rem; background:rgba(255,255,255,0.05);" onclick="saveStack()">
+              SALVAR STACK
+            </button>
+          </div>
+          <div style="text-align:center; margin-top:10px;">
+             <input type="file" id="file-upload" hidden onchange="loadFile(this)">
+             <span onclick="document.getElementById('file-upload').click()" style="font-size:0.7rem; color:#666; cursor:pointer; text-decoration:underline;">Importar Arquivo Externo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-scroll">
+      <div class="filter-pill active" onclick="setFilter('ALL', this)">ALL</div>
+      <div class="filter-pill" onclick="setFilter('APPS', this)">APPS</div>
+      <div class="filter-pill" onclick="setFilter('CODE', this)">CODE</div>
+      <div class="filter-pill" onclick="setFilter('DOCS', this)">DOCS</div>
+    </div>
+
+    <div id="vault-grid"></div>
+
+  </div>
+
+  <script>
+    // Initialize Icons
+    lucide.createIcons();
+
+    // --- KERNEL STATE ---
+    let vault = JSON.parse(localStorage.getItem('dual_vault_v12') || '[]');
+    let activeFilter = 'ALL';
+
+    // --- CORE FUNCTIONS ---
+
+    function saveStack() {
+      const content = document.getElementById('input-code').value;
+      const tag = document.getElementById('input-tag').value || 'RAW';
+      
+      if(!content.trim()) return alert('Input vazio.');
+
+      const lines = content.trim().split('\n');
+      const title = lines[0].replace(/[<#]/g, '').trim().substring(0, 30) || 'Untitled Stack';
+
+      const newStack = {
+        id: Date.now(),
+        title: title,
+        content: content,
+        tag: tag.toUpperCase(),
+        date: new Date().toLocaleDateString()
+      };
+
+      vault.unshift(newStack);
+      persist();
+      
+      // Reset UI
+      document.getElementById('input-code').value = '';
+      document.getElementById('creator-card').classList.remove('open');
+      render();
+    }
+
+    async function magicPaste() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if(text) {
+          document.getElementById('input-code').value = text;
+          document.getElementById('input-tag').value = 'CLIPBOARD';
+          saveStack();
+        }
+      } catch(e) { alert('Acesso ao Clipboard negado.'); }
+    }
+
+    function persist() {
+      localStorage.setItem('dual_vault_v12', JSON.stringify(vault));
+    }
+
+    function render() {
+      const grid = document.getElementById('vault-grid');
+      const filtered = activeFilter === 'ALL' ? vault : vault.filter(i => i.tag === activeFilter);
+      
+      grid.innerHTML = filtered.map(item => `
+        <div class="nexus-card" id="card-${item.id}">
+          <div class="card-header">
+            <div class="header-main" onclick="toggleCard('card-${item.id}')">
+              <div class="title">${esc(item.title)}</div>
+              <div class="meta">
+                <span class="badge">${esc(item.tag)}</span>
+                <span>${item.date}</span>
+              </div>
+            </div>
+            <div class="dock">
+              <button class="btn-icon run" onclick="runInjector(${item.id})" title="Inject Fullscreen"><i data-lucide="play" size="18"></i></button>
+              <button class="btn-icon" onclick="exportStack(${item.id})" title="Download Stack File"><i data-lucide="download" size="18"></i></button>
+              <button class="btn-icon" onclick="copyContent(${item.id})"><i data-lucide="copy" size="18"></i></button>
+              <button class="btn-icon del" onclick="deleteStack(${item.id})"><i data-lucide="trash-2" size="18"></i></button>
+            </div>
+          </div>
+          
+          <div class="expandable-content">
+             <div class="inner-content">
+               <textarea class="editor-box" readonly spellcheck="false">${esc(item.content)}</textarea>
+             </div>
+          </div>
+        </div>
+      `).join('');
+      
+      lucide.createIcons();
+    }
+
+    // --- ACTIONS ---
+
+    function toggleCard(id) {
+      document.getElementById(id).classList.toggle('open');
+    }
+
+    function setFilter(filter, el) {
+      activeFilter = filter;
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    }
+
+    function copyContent(id) {
+      const item = vault.find(i => i.id === id);
+      navigator.clipboard.writeText(item.content);
+      // Visual feedback could be added here
+    }
+
+    function deleteStack(id) {
+      if(confirm('Apagar permanentemente este Stack?')) {
+        vault = vault.filter(i => i.id !== id);
+        persist();
+        render();
+      }
+    }
+
+    function loadFile(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('input-code').value = e.target.result;
+            document.getElementById('input-tag').value = 'IMPORT';
+        };
+        reader.readAsText(file);
+    }
+
+    // --- CRITICAL FEATURE: EXPORT STACK ---
+    // Isso cria um arquivo HTML baixável com o conteúdo do card
+    function exportStack(id) {
+        const item = vault.find(i => i.id === id);
+        let blobContent = item.content;
+        
+        // Se não parecer HTML completo, envolvemos em um template básico
+        if(!blobContent.includes('<html')) {
+            blobContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${item.title}</title>
+<style>body{background:#050505; color:#fff; font-family:monospace; padding:20px;}</style>
+</head>
+<body>
+${blobContent}
+</body>
+</html>`;
+        }
+
+        const blob = new Blob([blobContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${item.title.replace(/\s+/g, '_')}_stack.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // --- CRITICAL FEATURE: FULLSCREEN INJECTOR ---
+    // Injeta o código em um iframe isolado tela cheia
+    function runInjector(id) {
+      const item = vault.find(i => i.id === id);
+      const layer = document.getElementById('immersive-layer');
+      const wrapper = document.getElementById('frame-wrapper');
+      
+      // Limpar anterior
+      wrapper.innerHTML = '';
+
+      // Criar Iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.background = '#fff';
+      // Sandbox permite scripts, mas bloqueia acesso ao pai por segurança
+      iframe.sandbox = "allow-scripts allow-forms allow-modals allow-same-origin"; 
+      
+      wrapper.appendChild(iframe);
+      layer.classList.add('active');
+
+      // Injeção via document.write (Garante execução imediata de scripts inline)
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(item.content);
+      doc.close();
+    }
+
+    function closeInjector() {
+      const layer = document.getElementById('immersive-layer');
+      layer.classList.remove('active');
+      setTimeout(() => {
+        document.getElementById('frame-wrapper').innerHTML = '';
+      }, 300);
+    }
+
+    // Utility
+    function esc(unsafe) {
+      return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+    }
+
+    // Init
+    render();
+
+  </script>
+</body>
+</html>

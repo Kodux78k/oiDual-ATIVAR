@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>DUAL // FUSION — OS Kernel v11.5 (Modal Save)</title>
+  <title>DUAL // FUSION — OS Kernel v11</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#030406">
 
@@ -10,19 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#030406">
-  <link rel="apple-touch-icon" href="./icon-192.png">
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
-        .catch(err => console.error('SW Error:', err));
-    }
-  </script>
-
   <style>
     :root {
+      /* Palette Unificada */
       --bg-deep: #030406;
       --glass-surface: rgba(20, 20, 25, 0.65);
       --glass-border: rgba(255, 255, 255, 0.08);
@@ -31,11 +21,14 @@
       --neon-green: #23ac51;
       --neon-orange: #f97316;
       --neon-blue: #3b82f6;
+      
+      /* Animation */
       --ease-elastic: cubic-bezier(0.34, 1.3, 0.64, 1);
       --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
     }
 
     * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+    
     body {
       margin: 0; padding: 20px;
       min-height: 100vh;
@@ -46,11 +39,13 @@
       background-image: radial-gradient(circle at 50% 0%, rgba(20,20,30,1) 0%, rgba(3,4,6,1) 100%);
     }
 
+    /* Ambient Blobs */
     .blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.15; z-index: -1; animation: float 20s infinite alternate; }
     .b1 { width: 300px; height: 300px; background: var(--neon-cyan); top: -50px; left: -50px; }
     .b2 { width: 350px; height: 350px; background: var(--neon-purple); bottom: -50px; right: -50px; animation-delay: -5s; }
     @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(30px,50px); } }
 
+    /* LAYOUT GRID */
     .layout {
       width: 100%; max-width: 1200px; margin: 0 auto;
       display: grid; grid-template-columns: 380px 1fr; gap: 30px;
@@ -58,6 +53,7 @@
     }
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
+    /* --- COMPONENTE 1: CONTROL MODULE (Esquerda) --- */
     .fusion-card {
       position: relative;
       background: var(--glass-surface);
@@ -68,26 +64,42 @@
       transition: all 0.5s var(--ease-elastic);
       display: flex; flex-direction: column; gap: 15px;
     }
+    
     .fusion-card.open { border-color: var(--neon-purple); box-shadow: 0 0 30px rgba(189, 0, 255, 0.1); }
+
     .card-header { display: flex; align-items: center; gap: 15px; cursor: pointer; user-select: none; }
-    .avatar-ring { width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan)); padding: 2px; flex-shrink: 0; }
+    .avatar-ring { 
+      width: 50px; height: 50px; border-radius: 50%; 
+      background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan));
+      padding: 2px; flex-shrink: 0;
+    }
     .avatar-inner { width: 100%; height: 100%; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    
     .header-info { display: flex; flex-direction: column; flex: 1; }
     .brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .status { font-size: 0.65rem; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; font-family: 'JetBrains Mono'; }
 
-    .recursive-block { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; opacity: 0; transform: translateY(10px); transition: all 0.3s var(--ease-smooth); display:none; }
+    /* Blocos Recursivos (Filhos do Fusion) */
+    .recursive-block { 
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; 
+      opacity: 0; transform: translateY(10px); transition: all 0.3s var(--ease-smooth); display:none; 
+    }
     .fusion-card.open .recursive-block { display: flex; flex-direction: column; gap: 10px; }
     .fusion-card.open .recursive-block.show { opacity: 1; transform: translateY(0); display: flex; }
 
+    /* Inputs & Buttons Fusion */
     .cyber-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 8px 0; color: #fff; font-family: 'JetBrains Mono'; font-size: 0.9rem; transition: 0.3s; }
     .cyber-input:focus { border-bottom-color: var(--neon-cyan); }
 
     .action-row { display: flex; gap: 8px; margin-top: 5px; }
-    .icon-btn { flex: 1; height: 40px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; color: rgba(255,255,255,0.7); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s; }
+    .icon-btn { 
+      flex: 1; height: 40px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); 
+      border-radius: 10px; color: rgba(255,255,255,0.7); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s; 
+    }
     .icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
     .icon-btn.primary { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.3); color: var(--neon-cyan); }
 
+    /* --- COMPONENTE 2: VAULT (Direita) --- */
     .master-card {
       background: var(--glass-surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border-radius: 20px; border: 1px solid var(--glass-border);
@@ -95,55 +107,45 @@
       transition: all 0.3s var(--ease-smooth);
     }
     .master-card.expanded { border-color: var(--neon-blue); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    
     .inner { padding: 16px; }
     .vault-header { display: flex; justify-content: space-between; align-items: center; }
+    
     .title-group { flex-grow: 1; cursor: pointer; overflow: hidden; }
     .card-title { font-weight: 700; font-size: 1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;}
     .card-meta { font-size: 0.65rem; color: #94a3b8; font-family: 'JetBrains Mono'; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
     .tag-badge { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--neon-cyan); font-weight: bold; }
 
+    /* Dock de Ações */
     .dock { display: flex; gap: 4px; align-items: center; }
     .ico { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); color: #cbd5e1; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
     .ico:hover { background: rgba(255,255,255,0.1); color: #fff; transform: scale(1.1); }
-
+    
     .content-box { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.4s var(--ease-smooth); }
     .expanded .content-box { max-height: 1200px; opacity: 1; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
 
-    .code-area { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: #e2e8f0; font-family: 'JetBrains Mono'; font-size: 0.8rem; line-height: 1.5; min-height: 120px; resize: vertical; display: block; }
+    .code-area { 
+      width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 12px; color: #e2e8f0; font-family: 'JetBrains Mono'; font-size: 0.8rem; 
+      line-height: 1.5; min-height: 120px; resize: vertical; display: block;
+    }
 
+    /* Warframe (App Container) */
     .warframe-view { width: 100%; height: 350px; border: none; background: #fff; border-radius: 12px; margin-top: 10px; }
 
+    /* Filter Bar */
     .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-    .filter-pill { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #888; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.3s; }
+    .filter-pill { 
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #888; 
+      padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.3s; 
+    }
     .filter-pill.active { background: var(--neon-cyan); color: #000; border-color: var(--neon-cyan); }
 
+    /* Immersive Overlay */
     #immersiveLayer { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     #immersiveLayer.active { opacity: 1; pointer-events: all; }
     .immersive-header { height: 50px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #050505; }
-
-    .fs-header-btn { height:30px; padding:0 12px; border-radius:8px; background: rgba(255,255,255,0.03); color:#cbd5e1; border: 1px solid transparent; cursor:pointer; font-weight:700; font-size:0.7rem; }
-    .fs-header-btn:hover { background: rgba(255,255,255,0.06); color: white; border-color: rgba(255,255,255,0.08); }
-    .fs-save { border-color: rgba(35,172,81,0.3); color: var(--neon-green); background: rgba(35,172,81,0.1); }
-    .fs-save:hover { background: var(--neon-green); color:#000; box-shadow:0 0 10px var(--neon-green); }
-
-    /* -------- Save Modal (integrated) -------- */
-    .save-modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 10010;
-    }
-    .save-modal-backdrop.active { display: flex; }
-    .save-modal {
-      width: 480px; max-width: 92%; border-radius: 14px; background: linear-gradient(180deg, rgba(10,10,12,0.98), rgba(6,6,8,0.98));
-      border: 1px solid rgba(255,255,255,0.06); padding: 18px; box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-      font-family: 'Plus Jakarta Sans', sans-serif; color: #e6eef8;
-    }
-    .save-modal h3 { margin:0 0 8px 0; font-size: 1rem; color: var(--neon-cyan); letter-spacing: 0.6px; }
-    .save-row { display:flex; gap:10px; margin-bottom:10px; }
-    .save-row .input { flex:1; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.04); padding:10px 12px; border-radius:8px; color:#e6eef8; font-family:'JetBrains Mono'; font-size:0.9rem; }
-    .save-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:8px; }
-    .btn-ghost { background: transparent; color:#cbd5e1; border:1px solid rgba(255,255,255,0.04); padding:8px 12px; border-radius:8px; cursor:pointer; }
-    .btn-primary { background: var(--neon-green); color:#000; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700; }
-    .save-preview { max-height: 160px; overflow:auto; background: rgba(0,0,0,0.45); border-radius:8px; padding:10px; font-family:'JetBrains Mono'; font-size:0.75rem; color:#dbeafe; border:1px solid rgba(255,255,255,0.03); margin-top:8px; white-space:pre-wrap; }
-
+    
   </style>
 </head>
 <body>
@@ -151,19 +153,16 @@
   <div class="blob b1"></div>
   <div class="blob b2"></div>
 
-  <!-- IMMERSIVE LAYER -->
   <div id="immersiveLayer">
     <div class="immersive-header">
       <span style="font-family:'JetBrains Mono'; color:var(--neon-cyan); font-size:0.8rem">// KERNEL RUNTIME</span>
-      <div style="display:flex; gap:10px;">
-          <button id="save-immersive-btn" class="fs-header-btn fs-save" data-action="save-immersive">💾 SALVAR COMO STACK</button>
-          <button class="fs-header-btn" style="border-color:rgba(255,0,0,0.3); color:#ff5555;" data-action="close-immersive">ENCERRAR</button>
-      </div>
+      <button class="icon-btn" style="width:auto; padding:0 15px; height:30px; font-size:0.7rem; border-color:red; color:red;" data-action="close-immersive">ENCERRAR</button>
     </div>
     <div id="immersiveContainer" style="width:100%; height:100%;"></div>
   </div>
 
   <div class="layout">
+    
     <div>
       <div class="fusion-card" id="mainCard">
         <div class="card-header" data-action="toggle-fusion">
@@ -205,6 +204,7 @@
     </div>
 
     <div>
+      
       <div class="filter-bar">
         <div class="filter-pill active" data-action="filter-vault" data-filter="ALL">ALL</div>
         <div class="filter-pill" data-action="filter-vault" data-filter="APP">APPS</div>
@@ -217,7 +217,7 @@
           <div class="vault-header">
             <div class="title-group" data-action="toggle-creator">
               <span class="card-title" style="color:var(--neon-orange)">⚡ INFINITY INJECTOR</span>
-              <span class="card-meta">VAULT v11.5 • WRITE MODE</span>
+              <span class="card-meta">VAULT v11.0 • WRITE MODE</span>
             </div>
             <div class="dock">
               <button class="ico" data-action="magic-paste" style="color:var(--neon-green)"><i data-lucide="clipboard"></i></button>
@@ -236,24 +236,7 @@
       </div>
 
       <div id="vaultList"></div>
-    </div>
-  </div>
 
-  <!-- SAVE MODAL -->
-  <div id="saveModalBackdrop" class="save-modal-backdrop" aria-hidden="true">
-    <div class="save-modal" role="dialog" aria-modal="true" aria-labelledby="saveModalTitle">
-      <h3 id="saveModalTitle">Salvar Stack</h3>
-      <div style="font-size:0.85rem; color:#9fbfdc; margin-bottom:8px;">Preencha um título e tag opcional. Conteúdo será salvo no Vault.</div>
-      <div class="save-row">
-        <input id="saveTitle" class="input" placeholder="Título (opcional)" />
-        <input id="saveGroup" class="input" placeholder="Tag (ex: APP)" />
-      </div>
-      <div style="font-size:0.75rem; color:#9fbfdc;">Preview</div>
-      <div id="savePreview" class="save-preview"></div>
-      <div class="save-actions">
-        <button id="saveCancelBtn" class="btn-ghost">CANCELAR</button>
-        <button id="saveConfirmBtn" class="btn-primary">SALVAR</button>
-      </div>
     </div>
   </div>
 
@@ -265,21 +248,22 @@
     let currentFilter = 'ALL';
     let editingId = null;
 
-    // temporary content holder for modal saves
-    let __modal_pending_content = '';
-
     // --- ACTION REGISTRY (THE KERNEL) ---
     const Actions = {
+      // Fusion Controls
       'toggle-fusion': () => {
         const c = document.getElementById('mainCard');
         const blocks = document.querySelectorAll('.recursive-block');
         c.classList.toggle('open');
         const isOpen = c.classList.contains('open');
         document.getElementById('chevron').style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+        
         if(isOpen) setTimeout(() => blocks.forEach(b => b.classList.add('show')), 200);
         else blocks.forEach(b => b.classList.remove('show'));
       },
+      
       'open-file': () => document.getElementById('fileInput').click(),
+      
       'execute-immersive': () => {
         if(!loadedContent) return;
         const container = document.getElementById('immersiveContainer');
@@ -291,20 +275,15 @@
         container.appendChild(iframe);
         document.getElementById('immersiveLayer').classList.add('active');
       },
+
       'close-immersive': () => {
         document.getElementById('immersiveLayer').classList.remove('active');
         setTimeout(() => document.getElementById('immersiveContainer').innerHTML = '', 400);
       },
 
-      // open save modal for loadedContent
-      'save-immersive': () => {
-        if(!loadedContent) return alert("Nenhum conteúdo carregado na memória.");
-        const suggested = (loadedContent.split('\n')[0] || 'Untitled').replace(/[#<]/g, '').slice(0,30).trim();
-        openSaveModal(loadedContent, suggested, 'IMPORT');
-      },
-
+      // Vault Controls
       'toggle-creator': () => document.getElementById('creatorCard').classList.toggle('expanded'),
-
+      
       'save-manual': () => {
         const text = document.getElementById('mainInput').value;
         const group = document.getElementById('mainGroup').value;
@@ -325,6 +304,7 @@
         render();
       },
 
+      // Item Actions
       'toggle-card': (ctx) => {
         const id = ctx.dataset.id;
         if(editingId && editingId !== Number(id)) cancelEdit();
@@ -366,7 +346,7 @@
       }
     };
 
-    // Event Delegation
+    // Event Delegation (O Coração do Sistema)
     document.body.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action]');
       if(!btn) return;
@@ -395,10 +375,10 @@
       document.getElementById('asciiTarget').innerText = `+----------------+\n| USER: ${val} |\n| STATUS: OK     |\n+----------------+`;
     });
 
-    function createCard(content, group = "RAW", titleOverride) {
-      const lines = (content || '').trim().split('\n');
-      const title = titleOverride || lines[0].substring(0, 35).replace(/[#<]/g, '').trim() || "Untitled Stack";
-      items.unshift({ id: Date.now(), title, content, group: (group||'RAW').toUpperCase(), date: new Date().toLocaleDateString() });
+    function createCard(content, group = "RAW") {
+      const lines = content.trim().split('\n');
+      const title = lines[0].substring(0, 35).replace(/[#<]/g, '').trim() || "Untitled Stack";
+      items.unshift({ id: Date.now(), title, content, group: group.toUpperCase(), date: new Date().toLocaleDateString() });
       save();
     }
 
@@ -469,33 +449,26 @@
       if (frameBox.style.display === 'none' || frameBox.innerHTML === '') {
         txt.style.display = 'none';
         frameBox.style.display = 'block';
-        frameBox.innerHTML = '';
+        frameBox.innerHTML = ''; // Limpa memória
 
+        // Toolbar
         const toolbar = document.createElement('div');
         toolbar.style.cssText = "display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;";
-
-        // Quick save (uses modal)
-        const btnSaveQuick = document.createElement('button');
-        btnSaveQuick.innerText = '💾 SALVAR';
-        btnSaveQuick.className = 'tag-badge';
-        btnSaveQuick.style.cursor = 'pointer';
-        btnSaveQuick.onclick = (e) => {
-          e.stopPropagation();
-          openSaveModal(item.content, item.title || item.content.split('\n')[0].slice(0,30), item.group || 'IMPORT');
-        };
-
+        
+        // Botão Fullscreen Seguro
         const btnExpand = document.createElement('button');
         btnExpand.innerText = '⛶ FULLSCREEN';
         btnExpand.className = 'tag-badge';
-        btnExpand.style.cursor = 'pointer';
+        btnExpand.style.cursor = 'pointer'; 
         btnExpand.onclick = (e) => {
             e.stopPropagation();
             launchFullscreenSafe(item.content);
         };
-
+        
+        // Botão Fechar
         const btnClose = document.createElement('button');
         btnClose.innerText = '✖ CODE VIEW';
-        btnClose.className = 'tag-badge';
+        btnClose.className = 'tag-badge'; 
         btnClose.style.cursor = 'pointer';
         btnClose.onclick = (e) => {
             e.stopPropagation();
@@ -504,16 +477,16 @@
             frameBox.innerHTML = '';
         };
 
-        toolbar.appendChild(btnSaveQuick);
         toolbar.appendChild(btnExpand);
         toolbar.appendChild(btnClose);
         frameBox.appendChild(toolbar);
 
+        // Preview Inline
         const iframe = document.createElement('iframe');
         iframe.className = 'warframe-view';
         iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
         frameBox.appendChild(iframe);
-
+        
         const doc = iframe.contentWindow.document;
         doc.open(); doc.write(item.content); doc.close();
 
@@ -524,41 +497,29 @@
       }
     }
 
-    // --- FULLSCREEN INJECTOR COM MODAL SAVE ---
     function launchFullscreenSafe(content) {
         const fs = document.createElement('div');
         fs.style.cssText = "position:fixed; inset:0; z-index:9999; background:#000; display:flex; flex-direction:column;";
         
         const header = document.createElement('div');
-        header.style.cssText = "padding:10px; background:#050505; border-bottom:1px solid #333; display:flex; justify-content:flex-end; gap:10px; align-items:center;";
+        header.style.cssText = "padding:10px; background:#111; display:flex; justify-content:flex-end;";
         
-        const btnSave = document.createElement('button');
-        btnSave.innerText = "💾 SALVAR COMO STACK";
-        btnSave.className = "fs-header-btn fs-save";
-        btnSave.onclick = () => {
-            openSaveModal(content, (content.split('\n')[0]||'Untitled').replace(/[#<]/g,'').slice(0,30).trim(), 'FORK', () => {
-                btnSave.innerText = "SALVO! ✔";
-                setTimeout(()=> btnSave.innerText = "💾 SALVAR COMO STACK", 1400);
-            });
-        };
-
         const closeBtn = document.createElement('button');
         closeBtn.innerText = "ENCERRAR SESSÃO";
-        closeBtn.className = "fs-header-btn";
-        closeBtn.style.color = "#ff5555";
-        closeBtn.style.borderColor = "rgba(255,0,0,0.3)";
+        closeBtn.style.cssText = "background:red; color:white; border:none; padding:8px 15px; font-weight:bold; cursor:pointer;";
         closeBtn.onclick = () => fs.remove();
         
-        header.appendChild(btnSave);
         header.appendChild(closeBtn);
         fs.appendChild(header);
 
         const frame = document.createElement('iframe');
         frame.style.cssText = "flex:1; border:none; background:#fff;";
-        frame.sandbox = "allow-scripts allow-forms";
+        frame.sandbox = "allow-scripts allow-forms"; // No same-origin for extra safety in fullscreen
+        
         fs.appendChild(frame);
         document.body.appendChild(fs);
 
+        // PostMessage Pattern para Injeção Segura
         frame.srcdoc = `<html><body><script>window.addEventListener('message', e => { if(e.data.type==='INIT') { document.open(); document.write(e.data.html); document.close(); } }); window.parent.postMessage({type:'READY'}, '*');<\/script></body></html>`;
         
         const listener = (e) => {
@@ -569,63 +530,6 @@
         };
         window.addEventListener('message', listener);
     }
-
-    // --- SAVE MODAL LOGIC ---
-    const modalBackdrop = document.getElementById('saveModalBackdrop');
-    const modalTitleInput = document.getElementById('saveTitle');
-    const modalGroupInput = document.getElementById('saveGroup');
-    const modalPreview = document.getElementById('savePreview');
-    const saveConfirmBtn = document.getElementById('saveConfirmBtn');
-    const saveCancelBtn = document.getElementById('saveCancelBtn');
-
-    function openSaveModal(content, suggestedTitle = '', suggestedGroup = '') {
-      __modal_pending_content = content || '';
-      modalTitleInput.value = suggestedTitle || '';
-      modalGroupInput.value = suggestedGroup || '';
-      modalPreview.textContent = (content || '').slice(0, 2000); // limit preview
-      modalBackdrop.classList.add('active');
-      document.body.style.overflow = 'hidden';
-      modalBackdrop.setAttribute('aria-hidden', 'false');
-      modalTitleInput.focus();
-    }
-
-    function closeSaveModal() {
-      __modal_pending_content = '';
-      modalBackdrop.classList.remove('active');
-      document.body.style.overflow = '';
-      modalBackdrop.setAttribute('aria-hidden', 'true');
-      modalTitleInput.value = '';
-      modalGroupInput.value = '';
-      modalPreview.textContent = '';
-    }
-
-    saveConfirmBtn.addEventListener('click', () => {
-      const title = modalTitleInput.value.trim() || undefined;
-      const group = modalGroupInput.value.trim() || 'IMPORT';
-      if(!__modal_pending_content) { alert('Conteúdo vazio.'); closeSaveModal(); return; }
-      createCard(__modal_pending_content, group, title);
-      closeSaveModal();
-      // small feedback
-      const flash = document.createElement('div');
-      flash.style.cssText = "position:fixed; right:20px; bottom:20px; background:var(--neon-green); color:#000; padding:8px 12px; border-radius:8px; font-weight:700; z-index:10020;";
-      flash.textContent = 'Stack salvo ✔';
-      document.body.appendChild(flash);
-      setTimeout(()=> flash.remove(), 1400);
-    });
-
-    saveCancelBtn.addEventListener('click', () => closeSaveModal());
-
-    // close modal on backdrop click (but not when clicking inside)
-    modalBackdrop.addEventListener('click', (e) => {
-      if(e.target === modalBackdrop) closeSaveModal();
-    });
-
-    // keyboard: Esc closes modal
-    document.addEventListener('keydown', (e) => {
-      if(e.key === 'Escape' && modalBackdrop.classList.contains('active')) {
-        closeSaveModal();
-      }
-    });
 
     function startEdit(id) { editingId = id; render(); }
     function cancelEdit() { editingId = null; render(); }

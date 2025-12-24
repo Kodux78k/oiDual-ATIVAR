@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>DUAL // FUSION — Recursive Fractal + Dual.Vault v10</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#030406">
+
+  <!-- Icons & Fonts -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+  <style>
+    :root {
+      --bg-deep: #030406;
+      --glass-surface: rgba(20, 20, 25, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --neon-cyan: #00f2ff;
+      --neon-purple: #bd00ff;
+      --neon-green: #23ac51;
+      --neon-orange: #f97316;
+      --neon-blue: #3b82f6;
+      --ease-elastic: cubic-bezier(0.34, 1.3, 0.64, 1);
+      --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      margin: 0; padding: 24px;
+      min-height: 100vh;
+      background-color: var(--bg-deep);
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+      display: flex; justify-content: center;
+      background-image: radial-gradient(circle at 50% 50%, rgba(20,20,30,1) 0%, rgba(3,4,6,1) 100%);
+    }
+
+    /* Ambient Effects */
+    .blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.1; z-index: -1; pointer-events: none; animation: float 25s infinite alternate; }
+    .b1 { width: 400px; height: 400px; background: var(--neon-cyan); top: -100px; left: -100px; }
+    .b2 { width: 450px; height: 450px; background: var(--neon-purple); bottom: -100px; right: -100px; animation-delay: -7s; }
+    @keyframes float { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(50px,80px) scale(1.1); } }
+
+    /* Layout Structure */
+    .layout {
+      width: 100%; max-width: 1200px; 
+      display: grid; grid-template-columns: 400px 1fr; gap: 32px;
+      align-items: start;
+    }
+
+    /* Common Card Styles */
+    .base-card {
+      background: var(--glass-surface);
+      backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      overflow: hidden;
+      transition: all 0.4s var(--ease-smooth);
+    }
+
+    /* Fusion Panel (Left) */
+    .fusion-card {
+      padding: 24px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .fusion-card.open { border-radius: 32px; border-color: rgba(0, 242, 255, 0.2); }
+
+    .card-header { display: flex; align-items: center; gap: 16px; cursor: pointer; user-select: none; }
+    .avatar-ring { 
+      width: 58px; height: 58px; border-radius: 50%; 
+      background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan)); 
+      padding: 2px; transition: transform 0.5s var(--ease-elastic);
+    }
+    .fusion-card.open .avatar-ring { transform: rotate(180deg); }
+    .avatar-inner { width: 100%; height: 100%; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    
+    .brand { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .status { font-size: 0.65rem; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; font-family: 'JetBrains Mono'; }
+
+    .recursive-block { 
+      background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03); 
+      border-radius: 16px; padding: 16px; 
+      display: none; opacity: 0; transform: translateY(10px);
+      transition: all 0.4s var(--ease-smooth);
+    }
+    .fusion-card.open .recursive-block { display: flex; flex-direction: column; gap: 12px; animation: fadeIn 0.4s forwards; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    /* Inputs & UI Elements */
+    .cyber-input { 
+      width: 100%; background: transparent; border: none; 
+      border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 0; 
+      color: #fff; font-family: 'JetBrains Mono'; font-size: 0.85rem; transition: 0.3s; 
+    }
+    .cyber-input:focus { border-bottom-color: var(--neon-cyan); background: rgba(255,255,255,0.02); }
+
+    .action-row { display: flex; gap: 8px; }
+    .btn-icon { 
+      flex: 1; height: 42px; background: rgba(255,255,255,0.05); 
+      border: 1px solid var(--glass-border); border-radius: 12px; 
+      color: #ccc; display: flex; align-items: center; justify-content: center; 
+      cursor: pointer; transition: 0.2s; 
+    }
+    .btn-icon:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn-icon.primary { background: rgba(0, 242, 255, 0.1); color: var(--neon-cyan); border-color: rgba(0, 242, 255, 0.3); }
+
+    .ascii-display { 
+      font-family: 'JetBrains Mono'; font-size: 0.65rem; color: rgba(255,255,255,0.5); 
+      white-space: pre; background: #000; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* Vault Panel (Right) */
+    .vault-controls { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .pill { 
+      background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
+      color: #888; padding: 6px 14px; border-radius: 20px; font-size: 0.7rem; 
+      font-weight: 700; cursor: pointer; transition: 0.2s; white-space: nowrap;
+    }
+    .pill.active { background: var(--neon-green); color: #fff; border-color: var(--neon-green); }
+
+    .master-card { margin-bottom: 16px; width: 100%; }
+    .master-card .inner { padding: 16px; }
+    
+    .card-row { display: flex; justify-content: space-between; align-items: center; }
+    .text-area { 
+      width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); 
+      border-radius: 12px; padding: 14px; color: #eee; font-family: 'JetBrains Mono'; 
+      font-size: 0.8rem; line-height: 1.6; resize: vertical; min-height: 80px;
+    }
+
+    .dock { display: flex; gap: 6px; }
+    .tool-btn { 
+      width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; 
+      justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); 
+      color: #aaa; cursor: pointer; transition: 0.2s;
+    }
+    .tool-btn:hover { background: rgba(255,255,255,0.08); color: #fff; transform: translateY(-2px); }
+    .tool-btn.orange { color: var(--neon-orange); }
+    .tool-btn.blue { color: var(--neon-blue); }
+    .tool-btn.red:hover { background: #ff4444; color: white; border-color: #ff4444; }
+
+    /* Immersive Layer */
+    #immersiveLayer { 
+      position: fixed; inset: 0; background: rgba(2, 2, 4, 0.98); 
+      z-index: 1000; display: none; flex-direction: column; opacity: 0; transition: 0.4s;
+    }
+    #immersiveLayer.active { display: flex; opacity: 1; }
+    .imm-header { height: 60px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+
+  <!-- Fullscreen Immersive View -->
+  <div id="immersiveLayer">
+    <div class="imm-header">
+      <span style="font-family:'JetBrains Mono'; color:var(--neon-cyan); font-size:0.75rem;">// TERMINAL_VISUALIZER_V10</span>
+      <button class="btn-icon" style="max-width:120px; font-size:0.7rem; border-color:#ff4444; color:#ff4444" data-action="close-immersive">TERMINAR</button>
+    </div>
+    <div id="immersiveContainer" style="flex:1"></div>
+  </div>
+
+  <div class="layout">
+    <!-- Panel: Fusion (Configuration) -->
+    <aside class="left-col">
+      <div class="base-card fusion-card" id="fusionRoot">
+        <header class="card-header" data-action="toggle-fusion">
+          <div class="avatar-ring">
+            <div class="avatar-inner">
+               <i data-lucide="Zap" stroke="#fff" size="24"></i>
+            </div>
+          </div>
+          <div>
+            <div class="brand">DUAL // FUSION</div>
+            <div class="status" id="mainStatus">OFFLINE</div>
+          </div>
+        </header>
+
+        <div class="recursive-block">
+          <label style="font-size:0.6rem; color:rgba(255,255,255,0.3); text-transform:uppercase">User Identification</label>
+          <input type="text" class="cyber-input" id="userName" placeholder="Comandante..." autocomplete="off">
+        </div>
+
+        <div class="recursive-block">
+          <div class="ascii-display" id="asciiBox">READY TO SYNC...</div>
+          <div class="action-row">
+            <button class="btn-icon" data-action="copy-ascii"><i data-lucide="copy" size="14"></i></button>
+            <button class="btn-icon" data-action="share-ascii"><i data-lucide="share-2" size="14"></i></button>
+          </div>
+        </div>
+
+        <div class="recursive-block">
+          <label style="font-size:0.6rem; color:rgba(255,255,255,0.3); text-transform:uppercase">Immersive Buffer</label>
+          <div class="action-row">
+            <button class="btn-icon" data-action="trigger-file"><i data-lucide="file-up" size="16"></i></button>
+            <button class="btn-icon primary" id="btnExecute" data-action="launch-immersive" style="opacity:0.3" disabled>
+              <i data-lucide="play" size="16"></i>
+            </button>
+          </div>
+          <div id="fileInfo" style="font-size:0.6rem; color:var(--neon-cyan); text-align:center; margin-top:4px"></div>
+          <input type="file" id="hiddenFile" style="display:none" accept=".html,.txt">
+        </div>
+      </div>
+    </aside>
+
+    <!-- Panel: Vault (Data) -->
+    <main class="right-col">
+      <div class="vault-controls">
+        <div class="filter-bar" id="vaultFilters">
+          <button class="pill active" data-filter="ALL">ALL_FILES</button>
+          <button class="pill" data-filter="CODE">SNIPPETS</button>
+          <button class="pill" data-filter="DOCS">DOCUMENTS</button>
+        </div>
+
+        <div class="base-card master-card" id="inputPanel">
+          <div class="inner">
+            <div class="card-row">
+              <span style="font-size:0.75rem; font-weight:800; color:var(--neon-orange); letter-spacing:1px">⚡ INFINITY.INJECTOR</span>
+              <div class="dock">
+                <button class="tool-btn orange" data-action="quick-paste" title="Quick Import"><i data-lucide="zap" size="16"></i></button>
+                <button class="tool-btn" data-action="clear-input"><i data-lucide="rotate-ccw" size="16"></i></button>
+              </div>
+            </div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px">
+              <textarea id="mainInput" class="text-area" placeholder="Cole o código ou texto aqui..."></textarea>
+              <div class="card-row">
+                <input id="mainTag" class="cyber-input" style="width:100px; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 10px" placeholder="Tag (CODE)">
+                <button class="btn-icon primary" style="flex:2" data-action="vault-save">SALVAR NO VAULT</button>
+                <button class="btn-icon" style="flex:1" data-action="trigger-import"><i data-lucide="download" size="16"></i></button>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="vaultImportFile" style="display:none" accept=".json">
+        </div>
+      </div>
+
+      <div id="vaultList" style="display:flex; flex-direction:column; gap:16px"></div>
+    </main>
+  </div>
+
+  <script>
+    /**
+     * DUAL // FUSION v10 - Core Engine
+     * Centralized Action Registry System
+     */
+    
+    // --- STATE MANAGEMENT ---
+    const State = {
+      user: 'UNKNOWN',
+      items: JSON.parse(localStorage.getItem('vault_v10') || '[]'),
+      filter: 'ALL',
+      editingId: null,
+      tempBuffer: null
+    };
+
+    const UI = {
+      status: document.getElementById('mainStatus'),
+      fusion: document.getElementById('fusionRoot'),
+      vault: document.getElementById('vaultList'),
+      ascii: document.getElementById('asciiBox'),
+      fileInfo: document.getElementById('fileInfo'),
+      btnExecute: document.getElementById('btnExecute')
+    };
+
+    // --- UTILS ---
+    const Utils = {
+      save: () => localStorage.setItem('vault_v10', JSON.stringify(State.items)),
+      safeHtml: (str) => DOMPurify.sanitize(str),
+      toast: (msg, color = 'var(--neon-cyan)') => {
+        UI.status.innerText = msg.toUpperCase();
+        UI.status.style.color = color;
+        setTimeout(() => {
+          UI.status.innerText = document.querySelector('.fusion-card').classList.contains('open') ? 'SINTONIZADO' : 'ONLINE';
+          UI.status.style.color = '';
+        }, 2000);
+      }
+    };
+
+    // --- ACTION REGISTRY ---
+    const Actions = {
+      // Fusion Actions
+      'toggle-fusion': () => {
+        const isOpen = UI.fusion.classList.toggle('open');
+        UI.status.innerText = isOpen ? 'SINTONIZADO' : 'ONLINE';
+        UI.status.style.color = isOpen ? 'var(--neon-purple)' : 'var(--neon-cyan)';
+      },
+      'copy-ascii': () => {
+        navigator.clipboard.writeText(UI.ascii.innerText);
+        Utils.toast('Copiado');
+      },
+      'share-ascii': () => {
+        if (navigator.share) navigator.share({ text: UI.ascii.innerText });
+      },
+      'trigger-file': () => document.getElementById('hiddenFile').click(),
+      'launch-immersive': () => {
+        if (!State.tempBuffer) return;
+        const layer = document.getElementById('immersiveLayer');
+        const container = document.getElementById('immersiveContainer');
+        container.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = "width:100%; height:100%; border:none; background:#fff";
+        iframe.sandbox = "allow-scripts allow-forms allow-same-origin";
+        iframe.srcdoc = State.tempBuffer;
+        container.appendChild(iframe);
+        layer.classList.add('active');
+      },
+      'close-immersive': () => {
+        document.getElementById('immersiveLayer').classList.remove('active');
+        setTimeout(() => document.getElementById('immersiveContainer').innerHTML = '', 400);
+      },
+
+      // Vault Actions
+      'vault-save': () => {
+        const content = document.getElementById('mainInput').value.trim();
+        const tag = document.getElementById('mainTag').value.trim() || 'DOCS';
+        if (!content) return Utils.toast('Vazio', '#ff4444');
+        
+        const newItem = {
+          id: Date.now(),
+          title: content.split('\n')[0].substring(0, 40).replace(/[#<]/g, ''),
+          content,
+          tag: tag.toUpperCase(),
+          date: new Date().toLocaleDateString('pt-BR')
+        };
+        State.items.unshift(newItem);
+        Utils.save();
+        document.getElementById('mainInput').value = '';
+        renderVault();
+        Utils.toast('Salvo');
+      },
+      'quick-paste': async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            document.getElementById('mainInput').value = text;
+            Utils.toast('Buffer Pronto');
+          }
+        } catch (e) { Utils.toast('Erro Acesso', '#ff4444'); }
+      },
+      'clear-input': () => {
+        document.getElementById('mainInput').value = '';
+        document.getElementById('mainTag').value = '';
+      },
+      'trigger-import': () => document.getElementById('vaultImportFile').click(),
+      
+      // Card specific
+      'card-delete': (id) => {
+        if (confirm('Deletar registro?')) {
+          State.items = State.items.filter(i => i.id !== id);
+          Utils.save();
+          renderVault();
+        }
+      },
+      'card-copy': (id) => {
+        const item = State.items.find(i => i.id === id);
+        if (item) {
+          navigator.clipboard.writeText(item.content);
+          Utils.toast('Texto Copiado');
+        }
+      },
+      'card-render': (id) => {
+        const item = State.items.find(i => i.id === id);
+        State.tempBuffer = item.content;
+        Actions['launch-immersive']();
+      }
+    };
+
+    // --- RENDER ENGINE ---
+    function renderVault() {
+      const filtered = State.filter === 'ALL' 
+        ? State.items 
+        : State.items.filter(i => i.tag === State.filter);
+
+      UI.vault.innerHTML = filtered.map(item => `
+        <div class="base-card master-card" style="animation: fadeIn 0.3s ease forwards">
+          <div class="inner">
+            <div class="card-row">
+              <div style="display:flex; flex-direction:column">
+                <span style="font-size:0.8rem; font-weight:800; color:#fff">${item.title || 'Sem Título'}</span>
+                <span style="font-size:0.6rem; color:#666; font-family:'JetBrains Mono'">[${item.tag}] • ${item.date}</span>
+              </div>
+              <div class="dock">
+                <button class="tool-btn blue" data-action="card-render" data-id="${item.id}"><i data-lucide="eye" size="14"></i></button>
+                <button class="tool-btn" data-action="card-copy" data-id="${item.id}"><i data-lucide="copy" size="14"></i></button>
+                <button class="tool-btn red" data-action="card-delete" data-id="${item.id}"><i data-lucide="trash-2" size="14"></i></button>
+              </div>
+            </div>
+            <div style="margin-top:10px">
+              <pre style="margin:0; font-size:0.7rem; color:#888; max-height:60px; overflow:hidden; mask-image: linear-gradient(to bottom, black 50%, transparent 100%)">${Utils.safeHtml(item.content.substring(0, 200))}</pre>
+            </div>
+          </div>
+        </div>
+      `).join('') || `<div style="text-align:center; padding:40px; color:#444; font-size:0.8rem">VAULT VAZIO</div>`;
+      
+      lucide.createIcons();
+    }
+
+    // --- EVENT LISTENERS ---
+    document.body.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      
+      const action = btn.dataset.action;
+      const id = btn.dataset.id ? Number(btn.dataset.id) : null;
+      
+      if (Actions[action]) Actions[action](id);
+    });
+
+    document.getElementById('vaultFilters').addEventListener('click', (e) => {
+      const pill = e.target.closest('.pill');
+      if (!pill) return;
+      
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      State.filter = pill.dataset.filter;
+      renderVault();
+    });
+
+    document.getElementById('userName').addEventListener('input', (e) => {
+      const name = (e.target.value || 'USER').toUpperCase().padEnd(8).slice(0, 8);
+      UI.ascii.innerText = `+----------------+\n| SYNC: ${name} |\n| CRYPT: DUAL.v10|\n+----------------+`;
+    });
+
+    document.getElementById('hiddenFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        State.tempBuffer = ev.target.result;
+        UI.fileInfo.innerText = `BUFFER: ${file.name.toUpperCase()}`;
+        UI.btnExecute.disabled = false;
+        UI.btnExecute.style.opacity = '1';
+        Utils.toast('Pronto');
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('vaultImportFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (Array.isArray(data)) {
+            State.items = [...data, ...State.items];
+            Utils.save();
+            renderVault();
+            Utils.toast('Importado');
+          }
+        } catch(err) { Utils.toast('JSON Inválido', '#ff4444'); }
+      };
+      reader.readAsText(file);
+    });
+
+    // --- INIT ---
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderVault();
+      setTimeout(() => Utils.toast('Sistema Online'), 1000);
+    });
+
+  </script>
+</body>
+</html>
+
